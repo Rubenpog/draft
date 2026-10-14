@@ -1,6 +1,6 @@
 # Soccer Draft
 
-A ten-team draft for a list of soccer players, run from a spreadsheet. The program is a single file, `soccer-draft.html`: open it in any recent browser (Chrome, Edge, Firefox, Safari). Nothing needs to be installed.
+A ten-team draft for a list of soccer players, run from a spreadsheet. The program is a single file, `index.html`: open it in any recent browser (Chrome, Edge, Firefox, Safari). Nothing needs to be installed. (`soccer-draft.html` only forwards to `index.html`, for links made before the file was renamed.)
 
 ## Start page
 
