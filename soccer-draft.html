@@ -1,0 +1,2076 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Soccer Draft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap">
+<style>
+:root {
+  /* Layout: sticky top bar; the teams in a left rail, the draft board or a team sheet in the main column; one column on phones */
+  --bg: #edf0ec;
+  --surface: #ffffff;
+  --surface-2: #f3f6f2;
+  --ink: #111a15;
+  --muted: #56625a;
+  --line: #d4dbd4;
+  --line-strong: #b3bdb5;
+  --primary: #111a15;
+  --primary-ink: #ffffff;
+  --taken-bg: #d3d9d3;
+  --taken-ink: #66726a;
+  --focus: #2a5bb0;
+  --danger: #b3261e;
+  /* Role colours follow the eFootball convention: keepers amber, defenders blue, midfielders green, forwards red */
+  --gk: #a35f00;
+  --def: #2a5bb0;
+  --mid: #23784a;
+  --fwd: #bc3226;
+  --oth: #5d6660;
+  --on-area: #ffffff;
+  --backdrop: rgba(10, 15, 12, .55);
+  --shadow: 0 1px 2px rgba(17, 26, 21, .06), 0 12px 32px rgba(17, 26, 21, .14);
+  --font-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius: 6px;
+  --radius-lg: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c110e;
+    --surface: #151c18;
+    --surface-2: #1c2520;
+    --ink: #e5ece7;
+    --muted: #97a49b;
+    --line: #27312b;
+    --line-strong: #3b473f;
+    --primary: #e5ece7;
+    --primary-ink: #0c110e;
+    --taken-bg: #070a08;
+    --taken-ink: #5b675f;
+    --focus: #8fb2f5;
+    --danger: #f2877a;
+    --gk: #f0b44e;
+    --def: #86aaf3;
+    --mid: #6bd394;
+    --fwd: #f38877;
+    --oth: #a5ada8;
+    --on-area: #0c110e;
+    --backdrop: rgba(0, 0, 0, .65);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c110e;
+  --surface: #151c18;
+  --surface-2: #1c2520;
+  --ink: #e5ece7;
+  --muted: #97a49b;
+  --line: #27312b;
+  --line-strong: #3b473f;
+  --primary: #e5ece7;
+  --primary-ink: #0c110e;
+  --taken-bg: #070a08;
+  --taken-ink: #5b675f;
+  --focus: #8fb2f5;
+  --danger: #f2877a;
+  --gk: #f0b44e;
+  --def: #86aaf3;
+  --mid: #6bd394;
+  --fwd: #f38877;
+  --oth: #a5ada8;
+  --on-area: #0c110e;
+  --backdrop: rgba(0, 0, 0, .65);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .55);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  padding-inline: 16px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, p { margin: 0; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.display {
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .01em;
+  line-height: .95;
+}
+.eyebrow {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.a-gk { --area: var(--gk); }
+.a-def { --area: var(--def); }
+.a-mid { --area: var(--mid); }
+.a-fwd { --area: var(--fwd); }
+.a-oth { --area: var(--oth); }
+.code {
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 800;
+  letter-spacing: .02em;
+  color: var(--area, var(--ink));
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+.btn:hover { border-color: var(--ink); }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+.btn-primary:hover { background: color-mix(in srgb, var(--primary) 84%, var(--bg)); border-color: transparent; }
+.btn-quiet { border-color: transparent; background: transparent; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.btn-quiet:hover { border-color: transparent; color: var(--ink); }
+.btn-small { min-height: 34px; padding: 5px 12px; font-size: 13.5px; }
+.btn-large { min-height: 48px; padding: 12px 28px; font-size: 16px; }
+
+/* Setup screen */
+.setup {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-block: 48px 72px;
+  display: grid;
+  gap: 28px;
+}
+.setup-head { display: grid; gap: 14px; }
+.setup-head h1 { font-size: clamp(46px, 10vw, 84px); }
+.lead { max-width: 56ch; font-size: 16.5px; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.resume {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  padding: 18px 20px;
+  border-color: var(--line-strong);
+}
+.resume-text { display: grid; gap: 4px; min-width: 0; }
+.resume-title { font-size: 17px; font-weight: 700; }
+.new-draft { display: grid; gap: 10px; }
+.new-draft > .eyebrow { padding-inline: 2px; }
+.step {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  padding: 22px 20px;
+  border-top: 1px solid var(--line);
+}
+.step:first-child { border-top: 0; }
+.step-no {
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--muted);
+}
+.step-body { display: grid; gap: 14px; min-width: 0; align-content: start; }
+.step-title { font-size: 18px; font-weight: 700; line-height: 1.25; }
+.step-title-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+.step-title-row .btn-quiet { min-height: 30px; padding: 4px 6px; }
+.source {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.source.dragging { border: 1px solid var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent); }
+.source-name { font-weight: 700; overflow-wrap: anywhere; }
+.source-meta { font-size: 14px; color: var(--muted); }
+.warning { font-size: 13.5px; color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  font-size: 13px;
+}
+.chip .code { font-size: 14.5px; }
+.chip.zero { background: transparent; color: var(--muted); }
+.chip.zero .code { color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.hint { font-size: 13.5px; color: var(--muted); max-width: 64ch; }
+.error { font-size: 14px; font-weight: 600; color: var(--danger); }
+.team-inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; }
+.field { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 8px; }
+.field label { font-size: 13px; color: var(--muted); text-align: right; }
+.input {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.input::placeholder { color: var(--muted); opacity: .75; }
+.input:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; border-color: var(--focus); }
+.setup-submit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 18px 20px;
+  border-top: 1px solid var(--line);
+}
+.save-note { font-size: 13.5px; color: var(--muted); }
+.submit-group { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 16px; margin-left: auto; }
+
+/* Draft screen */
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 30;
+  margin-inline: -16px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+}
+.brand-small { font-size: 25px; }
+.progress { min-width: 0; font-size: 13.5px; color: var(--muted); overflow-wrap: anywhere; }
+.progress strong { color: var(--ink); font-weight: 700; }
+.topbar-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.layout {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  align-items: start;
+  gap: 28px;
+  padding-block: 22px 80px;
+}
+.sidebar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--topbar-h, 56px) + 22px); min-width: 0; }
+.nav { display: grid; gap: 2px; }
+.nav-label { padding: 14px 10px 4px; }
+.nav-label:first-child { padding-top: 0; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  font-weight: 600;
+  text-align: left;
+}
+.nav-item:hover { background: var(--surface); border-color: var(--line); }
+.nav-item[aria-current="page"] { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+.nav-item .name { min-width: 0; overflow-wrap: anywhere; }
+.nav-item .count { font-size: 13px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.nav-item[aria-current="page"] .count { color: inherit; opacity: .75; }
+.main { display: grid; gap: 18px; min-width: 0; }
+.main:focus { outline: none; }
+
+/* Draft board */
+.roles-wrap { z-index: 10; background: var(--bg); }
+.roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.area { display: grid; gap: 7px; align-content: start; min-width: 0; }
+.area-name { display: flex; align-items: center; gap: 7px; }
+.area-name::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--area); }
+.area-roles { display: flex; flex-wrap: wrap; gap: 6px; }
+.role-btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 10px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.role-btn .code { font-size: 20px; line-height: 1; }
+.role-btn .avail { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.role-btn:hover { border-color: var(--area); }
+.role-btn.done { background: var(--taken-bg); border-color: var(--line); }
+.role-btn.done .code { color: var(--taken-ink); }
+.role-btn[aria-pressed="true"] { background: var(--area); border-color: var(--area); }
+.role-btn[aria-pressed="true"] .code,
+.role-btn[aria-pressed="true"] .avail { color: var(--on-area); }
+.list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 16px;
+  padding-inline: 2px;
+}
+.list-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-width: 0; }
+.list-title .code { font-size: 36px; line-height: 1; }
+.list-title .full { font-size: 17px; font-weight: 600; }
+.list-meta { font-size: 13.5px; color: var(--muted); }
+.table { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
+.cols, .p-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 12px;
+  padding-inline: 16px;
+}
+.cols { min-height: 34px; border-bottom: 1px solid var(--line); }
+.cols .r { text-align: right; }
+.players { list-style: none; margin: 0; padding: 0; }
+.players > li + li { border-top: 1px solid var(--line); }
+.p-row {
+  width: 100%;
+  min-height: 48px;
+  padding-block: 7px;
+  border: 0;
+  background: var(--surface);
+  text-align: left;
+}
+.p-row:not(:disabled):hover,
+.p-row:not(:disabled):active { background: var(--surface-2); }
+.p-row:not(:disabled):hover .p-name { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.p-rank { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.p-main { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.p-name { font-weight: 600; overflow-wrap: anywhere; }
+.p-ovr {
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.p-row:disabled { background: var(--taken-bg); color: var(--taken-ink); }
+.p-row:disabled .p-name { font-weight: 500; }
+.p-row:disabled .p-rank,
+.p-row:disabled .p-ovr { color: var(--taken-ink); }
+.tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Team sheet */
+.team-head { display: grid; gap: 12px; }
+.team-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.team-title { min-width: 0; font-size: clamp(32px, 4.8vw, 48px); overflow-wrap: anywhere; }
+.team-stats { color: var(--muted); }
+.rename { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rename .input { width: min(380px, 100%); }
+.groups { columns: 2 340px; column-gap: 16px; }
+.group {
+  break-inside: avoid;
+  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 11px 16px 9px; border-bottom: 1px solid var(--line); }
+.group-head .code { font-size: 22px; line-height: 1; }
+.group-head .full { font-weight: 600; }
+.group-head .n { margin-left: auto; font-size: 13px; color: var(--muted); }
+.t-list { list-style: none; margin: 0; padding: 0; }
+.t-list > li + li { border-top: 1px solid var(--line); }
+.t-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 10px 6px 16px;
+}
+.t-name { font-weight: 600; overflow-wrap: anywhere; }
+.t-ovr { text-align: right; }
+.remove-btn {
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.remove-btn:hover { border-color: var(--danger); color: var(--danger); }
+.empty { display: grid; justify-items: start; gap: 12px; padding: 24px 20px; }
+.empty p { max-width: 52ch; color: var(--muted); }
+
+/* Dialogs */
+dialog {
+  width: min(600px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+dialog::backdrop { background: var(--backdrop); }
+.dlg { display: grid; gap: 18px; padding: 22px; }
+.dlg:focus { outline: none; }
+.dlg-head { display: grid; gap: 8px; }
+.dlg-player { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 6px 16px; }
+.dlg-name { min-width: 0; font-size: 34px; overflow-wrap: anywhere; }
+.dlg-ovr { display: flex; align-items: baseline; gap: 8px; }
+.dlg-ovr .display { font-size: 34px; }
+.dlg-role { font-weight: 600; }
+.dlg-title { font-size: 20px; font-weight: 700; }
+.team-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.team-btn {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  min-height: 58px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: left;
+}
+.team-btn:hover,
+.team-btn:active { border-color: var(--ink); background: var(--surface-2); }
+.team-btn .tname { font-weight: 700; overflow-wrap: anywhere; }
+.team-btn .tmeta { font-size: 12.5px; color: var(--muted); }
+.dlg-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 9px 9px 9px 16px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-ink);
+  box-shadow: var(--shadow);
+  transform: translateX(-50%);
+}
+.toast-msg { min-width: 0; overflow-wrap: anywhere; }
+.toast button {
+  flex: none;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font-weight: 700;
+}
+.toast.in { animation: toast-in .18s ease-out; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.noscript { max-width: 600px; margin: 48px auto; font-size: 16px; }
+
+@media (min-width: 881px) and (min-height: 700px) {
+  .roles-wrap {
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + var(--topbar-h, 56px));
+    margin-top: -12px;
+    padding-top: 12px;
+  }
+}
+@media (max-width: 880px) {
+  .topbar { position: static; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 14px; padding-block: 0 72px; }
+  .sidebar {
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    margin-inline: -16px;
+    padding: 10px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-label { display: none; }
+  .nav-item { flex: none; width: auto; padding: 7px 12px; border-color: var(--line); background: var(--surface); }
+  .nav-item .name { white-space: nowrap; }
+}
+@media (max-width: 560px) {
+  .setup { padding-block: 28px 56px; gap: 22px; }
+  .step { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 18px 16px; }
+  .step-no { font-size: 22px; }
+  .team-inputs { grid-template-columns: minmax(0, 1fr); }
+  .setup-submit { padding: 16px; }
+  .submit-group { margin-left: 0; justify-content: flex-start; }
+  .roles { padding: 12px; gap: 12px 18px; }
+  .cols, .p-row { grid-template-columns: 30px minmax(0, 1fr) 48px; gap: 10px; padding-inline: 12px; }
+  .list-title .code { font-size: 30px; }
+  .t-row { padding-left: 12px; }
+  .dlg { padding: 18px; }
+  .dlg-name, .dlg-ovr .display { font-size: 28px; }
+}
+@media (max-width: 340px) {
+  .team-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast.in { animation: none; }
+}
+</style>
+</head>
+<body>
+<noscript><p class="noscript">Soccer Draft needs JavaScript. Turn it on in your browser and reload the page.</p></noscript>
+
+<main id="setup-screen" class="setup" aria-labelledby="setup-title">
+  <header class="setup-head">
+    <h1 id="setup-title" class="display">Soccer Draft</h1>
+    <p class="lead">Name the ten teams, then assign the players role by role. Assigned players stay locked until they are removed from their team.</p>
+  </header>
+
+  <section id="resume-card" class="card resume" aria-labelledby="resume-title" hidden>
+    <div class="resume-text">
+      <h2 id="resume-title" class="resume-title">Draft in progress</h2>
+      <p id="resume-meta" class="muted"></p>
+    </div>
+    <button type="button" id="resume-btn" class="btn btn-primary">Resume draft</button>
+  </section>
+
+  <section class="new-draft" aria-labelledby="new-title">
+    <h2 id="new-title" class="eyebrow">New draft</h2>
+    <div class="card">
+      <div class="step">
+        <span class="step-no" aria-hidden="true">1</span>
+        <div class="step-body">
+          <h3 class="step-title">Spreadsheet</h3>
+          <div id="source-box" class="source">
+            <p id="source-name" class="source-name"></p>
+            <p id="source-meta" class="source-meta"></p>
+            <div id="source-roles" class="chips"></div>
+            <p id="source-warning" class="warning" hidden></p>
+          </div>
+          <p id="source-error" class="error" role="alert" hidden></p>
+          <div class="actions">
+            <button type="button" id="load-btn" class="btn">Load a different spreadsheet</button>
+            <button type="button" id="builtin-btn" class="btn btn-quiet" hidden>Use the built-in list</button>
+          </div>
+          <p class="hint">Excel (.xlsx) or CSV. The sheet needs the columns Name, Role and Overall (Score also works), one player per row. You can also drop the file on this page.</p>
+          <input type="file" id="file-input" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-no" aria-hidden="true">2</span>
+        <div class="step-body">
+          <div class="step-title-row">
+            <h3 id="names-title" class="step-title">Team names</h3>
+            <button type="button" id="clear-names" class="btn btn-quiet btn-small">Clear names</button>
+          </div>
+          <div id="team-inputs" class="team-inputs" role="group" aria-labelledby="names-title"></div>
+        </div>
+      </div>
+      <div class="setup-submit">
+        <p class="save-note">The draft saves automatically as you go.</p>
+        <div class="submit-group">
+          <p id="setup-error" class="error" role="alert" hidden></p>
+          <button type="button" id="start-btn" class="btn btn-primary btn-large">Start draft</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="draft-screen" hidden>
+  <header id="topbar" class="topbar">
+    <div class="topbar-inner">
+      <p class="display brand-small">Soccer Draft</p>
+      <p id="progress" class="progress"></p>
+      <div class="topbar-actions">
+        <button type="button" id="export-btn" class="btn btn-small" data-action="export">Export teams (.xlsx)</button>
+        <button type="button" class="btn btn-small" data-action="new-draft">New draft</button>
+      </div>
+    </div>
+  </header>
+  <div class="layout">
+    <nav id="sidebar" class="sidebar" aria-label="Draft board and teams"></nav>
+    <main id="main" class="main" tabindex="-1"></main>
+  </div>
+</div>
+
+<dialog id="assign-dialog" aria-labelledby="assign-title">
+  <div class="dlg" tabindex="-1" autofocus>
+    <div class="dlg-head">
+      <p id="assign-title" class="eyebrow">Assign to a team</p>
+      <div class="dlg-player">
+        <p id="assign-name" class="display dlg-name"></p>
+        <p class="dlg-ovr"><span class="eyebrow">Overall</span><span id="assign-ovr" class="display num"></span></p>
+      </div>
+      <p id="assign-role" class="dlg-role"></p>
+    </div>
+    <div id="assign-teams" class="team-grid"></div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Cancel</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-body">
+  <div class="dlg" tabindex="-1" autofocus>
+    <h2 id="confirm-title" class="dlg-title"></h2>
+    <p id="confirm-body" class="muted"></p>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="button" id="confirm-ok" class="btn btn-primary"></button>
+    </div>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" hidden>
+  <span id="toast-msg" class="toast-msg"></span>
+  <button type="button" id="toast-undo">Undo</button>
+</div>
+<div id="live" class="sr-only" aria-live="polite"></div>
+
+<script id="builtin-data" type="application/json">{"file":"Rosa_per_ruolo.xlsx","sheet":"Overall","players":[["Porunga","GK",109],["Gojo","CMF",109],["Uchiha itachi","CMF",109],["Jiren","CMF",109],["Super Totti","LWF",109],["Super Totti og","RWF",109],["Super Totti 2","SS",109],["Jesus","CF",109],["Sasuke","LB",108],["Goku","CF",108],["Vegeta","CF",108],["Isaac netero","CMF",106],["Rock Lee","RMF",106],["Shenron","GK",104],["Whis","AMF",103],["Frieza","LWF",103],["Ruben pog","CMF",102],["Broly","GK",101],["Meruem","CF",101],["Hulk","GK",100],["Android 16","CB",100],["Omni man","CF",100],["Superman","CF",100],["Dada","LMF",99],["Kid buu","RMF",99],["Naruto","CF",99],["Macaco monkey","CF",99],["Andreas","CF",99],["Toppo","GK",98],["Battle beast","CB",98],["Tom T Rosa","CB",98],["Pietro frisoni","DMF",98],["Deku","LMF",98],["Zep","RMF",98],["Luffy","CF",98],["Dyspo","LMF",97],["Tsubasa","AMF",97],["Saitama","AMF",97],["Omega shenron","CF",97],["Michael Jordan","CF",97],["Il cippe","RB",96],["Il cippe","RB",96],["Piccolo","DMF",96],["All might","CF",96],["Dio brando","CF",96],["Beerus","CF",96],["Papa monkey","CB",95],["Skips","CB",95],["Gohan","RB",95],["Cell","DMF",95],["Homer Simpson","CF",95],["Lebron","CF",95],["Dracula","GK",94],["Scimmia Monkey","LB",94],["Qarrad Monkey","DMF",94],["Hit","DMF",94],["Mario","SS",94],["Goku black","CF",94],["Kara","CF",94],["Volpescu","CB",93],["Endeavor","CB",93],["Geralt of rivia","DMF",93],["Eriko biba","LMF",93],["Super buu","LMF",93],["Bakugo","AMF",93],["Kyrie Irving","AMF",93],["Luca Josephiani","SS",93],["Hisoka Morow","CF",93],["Wakabayashi","GK",92],["Tommo","CB",92],["Poly","LB",92],["Rotunno","RB",92],["Victorlaszlo","DMF",92],["De Rossi","DMF",92],["Zoro","CMF",92],["Giorno Giovanna","CMF",92],["Todoroki","AMF",92],["Jotaro","CF",92],["Bartholomew Kuma","CB",91],["Sullivan","CB",91],["Nico pertici","CB",91],["Zanghief","CB",91],["Matsuyama","DMF",91],["M. Bison","DMF",91],["Kevin Durant","CMF",91],["Ezeonu","CMF",91],["Alucard","LWF",91],["Sonic","SS",91],["Ryu","CF",91],["Ectoplasm","GK",90],["Mark Evans","GK",90],["Andrea Discepolo","GK",90],["Nappa","CB",90],["Francesca Martella","LB",90],["Nami","RB",90],["Vking","DMF",90],["Yoda","DMF",90],["Sephirot","CMF",90],["Spiderman","LMF",90],["Luigi","RMF",90],["Androide 17","AMF",90],["Dario Moccia","CF",90],["Ganondorf","CF",90],["captain America","CF",90],["Shaq","GK",89],["Masella","GK",89],["Selkie","CB",89],["Usain Bolt","RB",89],["Portgas D ace","RB",89],["Nanni","RB",89],["Gervinho Prime","LWF",89],["Bart Simpson","SS",89],["John cena","CF",89],["Usopp","GK",88],["Chewbacca","CB",88],["Seto Kaiba","CB",88],["Brook","LB",88],["Rob mcquack","DMF",88],["Chopper","LMF",88],["Trunks","RMF",88],["Yami yugi","AMF",88],["Elmo","AMF",88],["Pitbull","LWF",88],["Nico robin","CF",88],["Kojiro hyuga","CF",88],["Peter griffin","CF",88],["Kermit","CF",88],["Xavier foster","CF",88],["Diavolo","CB",87],["Mike Wazowski","LB",87],["Josuke higashikata","CMF",87],["Funky Kong","CMF",87],["Meliodas","LMF",87],["Cabba","RMF",87],["Flash","RMF",87],["Kurapika","AMF",87],["Mario Sturniolo","AMF",87],["Guile","AMF",87],["Ichigo","SS",87],["Mickey Mouse","SS",87],["Batman","CF",87],["Axel blaze","CF",87],["Invincible","CF",87],["Shadow","CF",87],["Jonathan Joestar","GK",86],["Maldonado","GK",86],["Jozu","CB",86],["Thor stoutberg","CB",86],["Bull","CB",86],["Eijiro","CB",86],["Shrek","CB",86],["Zamasu","CB",86],["Wario","CB",86],["Tien","CB",86],["Cyborg","CB",86],["Yusei Fudo","CB",86],["Ging freecss","RB",86],["Kirito","DMF",86],["Deathstroke","DMF",86],["Shingo aoi","CMF",86],["Totti","CMF",86],["Crash bandicoot","LMF",86],["Paperino","LMF",86],["Sonic.exe","RMF",86],["Charmander","RMF",86],["Daffy Duck","AMF",86],["Killua","LWF",86],["Torcia umana","LWF",86],["Gon freecs","RWF",86],["Enrique iglesias","RWF",86],["Chun li","SS",86],["Mordecai","CF",86],["Bugs bunny","CF",86],["Captain falcon","CF",86],["Pete","GK",85],["Franky","GK",85],["Spike Spiegel","GK",85],["C-3P0","GK",85],["The Grinch","GK",85],["The immortal","CB",85],["Joseph joestar","CB",85],["Barbanera","CB",85],["T rex","CB",85],["Cookie monster","CB",85],["Caesar","CB",85],["Snoop dogg","CB",85],["Champa","CB",85],["Goofy","CB",85],["Venom","CB",85],["Marco","DMF",85],["Apu","DMF",85],["Lisa Simpson","LMF",85],["Silver","LMF",85],["Yoshikage kira","RMF",85],["Aizawa","RMF",85],["Quicksilver","RMF",85],["Samus","RMF",85],["Hamilton","AMF",85],["Megamind","AMF",85],["Cooler","SS",85],["Dabura","SS",85],["Uub","SS",85],["Kratos","CF",85],["El primo","CF",85],["Deadpool","CF",85],["Juan","CB",84],["Sanji","LB",84],["Hurley Kane","LB",84],["Chance the rapper","LB",84],["Black panther","LB",84],["Speedy Gonzales","RB",84],["Best jeanist","DMF",84],["Pumba","DMF",84],["Magneto","DMF",84],["Knuckles","DMF",84],["Yugi muto","CMF",84],["Poco","CMF",84],["Squirtle","LMF",84],["Bruno bucciarari","LMF",84],["Eren jaeger","RMF",84],["Ratchet","RMF",84],["Supergirl","RMF",84],["Metal Sonic","RMF",84],["Atom eve","AMF",84],["Michael Jackson","AMF",84],["Pikachu","AMF",84],["Burter","LWF",84],["Timbershow","SS",84],["Judai yuki","CF",84],["Yoshi","CF",84],["Kobe bryant","CF",84],["King Cold","GK",83],["Doomsday","GK",83],["Foghorn Leghorn","GK",83],["Rikido","CB",83],["Moe","CB",83],["Waluigi","LB",83],["Jose Angel","LB",83],["Velociraptor","RB",83],["Heigoro","RB",83],["Crow","RB",83],["Leone Abbacchio","DMF",83],["Chazz princeton","DMF",83],["Pjanic","CMF",83],["Ironman","CMF",83],["Robot","CMF",83],["Light yagami","CMF",83],["Rex splode","LMF",83],["Leon","LMF",83],["Metal frieza","LMF",83],["Jose Carioca","RMF",83],["Jude sharp","AMF",83],["Impostor","RWF",83],["Goten","RWF",83],["Kid trunks","SS",83],["Slenderman","CF",83],["Fox","CF",83],["Bowser","GK",82],["Chief Wiggum","GK",82],["Mortis","GK",82],["Todd Ironside","CB",82],["Guido mista","CB",82],["Krusty il clown","CB",82],["Verstappen","CB",82],["Recoome","CB",82],["Brudisso","CB",82],["Heinze","CB",82],["Johnny Bravo","CB",82],["Simba","LB",82],["Marge Simpson","LB",82],["Bert","LB",82],["Dynamike","LB",82],["Green Arrow","RB",82],["Cassetti","RB",82],["Pb&J Time!!","RB",82],["Shelly","DMF",82],["Taz","DMF",82],["Jay Z","DMF",82],["Timon","CMF",82],["Rigby","LMF",82],["Tokoyami","RMF",82],["Curioso come george","AMF",82],["Blossom","AMF",82],["Fall guy","AMF",82],["Colt","AMF",82],["Ash Ketchum","CF",82],["Ginyu","CF",82],["Beast","CF",82],["Lord Slug","GK",81],["Parappa","GK",81],["Psy","CB",81],["Clank","CB",81],["Mr satan","CB",81],["Wolverine","CB",81],["Joker","CB",81],["Tweety","LB",81],["Greenway","LB",81],["Sideshow Bob","RB",81],["Raditz","RB",81],["Milhouse","RB",81],["Narancia","RB",81],["Gary","RB",81],["Buttercup","DMF",81],["Great ape","DMF",81],["Cydonia","CMF",81],["Ceasar zeppeli","CMF",81],["Zarbon","CMF",81],["Obi wan","CMF",81],["Roadrunner","LMF",81],["Firestorm","LMF",81],["Yuma tsukumo","RMF",81],["Kirby","RMF",81],["Falco","AMF",81],["Weegee","RWF",81],["Classic Sonic","SS",81],["Kdot","SS",81],["Master chief","CF",81],["King Dedede","GK",80],["Megazord","GK",80],["Harambe","GK",80],["Snorlax","GK",80],["Frank","CB",80],["Spike","CB",80],["Giulio Cesare","CB",80],["Winnie the pooh","CB",80],["Re boo","CB",80],["Tom","CB",80],["Snake","CB",80],["Aquaman","LB",80],["Brock","RB",80],["Ernie","RB",80],["Beast boy","RB",80],["Mortimer Mouse","RB",80],["Link","DMF",80],["Doom guy","DMF",80],["Shulk","CMF",80],["Ned Flanders","CMF",80],["Pidgeot","CMF",80],["Koopa","LMF",80],["Will a. Zeppeli","LMF",80],["Krilin","LMF",80],["Dupli kate","RMF",80],["SpongeBob","RMF",80],["Future Trunks","AMF",80],["Crewmate","LWF",80],["Leclerc","CF",80],["George Washington","CF",80],["Alien","CF",80],["Dodoria","CB",79],["Master Roshi","CB",79],["Bo","LB",79],["Piper","RB",79],["Sabaku","DMF",79],["monster girl","DMF",79],["Ferb","DMF",79],["Peach","CMF",79],["Jessie","CMF",79],["Will E Coyote","RMF",79],["Jerry","RMF",79],["2pac","AMF",79],["Sora","LWF",79],["Cuphead","SS",79],["Kanye","SS",79],["Zeus","CF",79],["Minnie","CF",79],["Eminem","CF",79],["Woody","CB",78],["Loki","RB",78],["Daisy","CMF",78],["R2-D2","CMF",78],["Tails","CMF",78],["Mr game&watch","CMF",78],["Wolf","LMF",78],["Birdo","AMF",78],["Jeice","RWF",78],["King bob omb","CF",78],["Abraham Lincoln","CF",78],["Dr Nefario","GK",77],["Sainz","CB",77],["Norris","CB",77],["Wiggler","CB",77],["Ben 10","CB",77],["Yamcha","LB",77],["Stewie griffin","RB",77],["Remy","RB",77],["Kamek","RB",77],["Rosalina","DMF",77],["Lex Luthor","DMF",77],["Phineas","CMF",77],["Tim sanders","CMF",77],["Bubbles","LMF",77],["Diddy Kong","LMF",77],["Meta knight","AMF",77],["Mugman","LWF",77],["Buzz lighyear","RWF",77],["Lil uzi","CF",77],["Pac man","CF",77],["Future","GK",76],["Vettel","CB",76],["Enrico VIII","CB",76],["Biggie","CB",76],["Sheik","CB",76],["Pit","CB",76],["Max goofy","CB",76],["Lanterna Verde","LB",76],["Zelda","DMF",76],["Lil Wayne","CMF",76],["Slave","LMF",76],["Re Davide","LMF",76],["Koichi Hirose","RB",75],["Scott Vanian","DMF",75],["Martin Luther King","GK",74],["Lamela","SS",74],["Chicharito","CF",74],["Travis Scott","RB",73],["Napoleon","DMF",73],["Guldo","CMF",72],["Donald Trump","GK",40]]}</script>
+<script>
+(function () {
+'use strict';
+
+/* ------------------------------------------------------------------ setup */
+
+const TEAM_COUNT = 10;
+const NAME_MAX = 30;
+const STORAGE_KEY = 'soccer-draft.v1';
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+const AREA_LABELS = { gk: 'Goalkeepers', def: 'Defenders', mid: 'Midfielders', fwd: 'Forwards', oth: 'Other roles' };
+const AREA_ORDER = ['gk', 'def', 'mid', 'fwd', 'oth'];
+
+// Role codes in pitch order: the eFootball codes used by the built-in list, plus common FIFA and fantacalcio codes.
+const KNOWN_ROLES = [
+  ['GK', 'Goalkeeper', 'gk'], ['P', 'Goalkeeper', 'gk'],
+  ['SW', 'Sweeper', 'def'], ['CB', 'Center Back', 'def'], ['LB', 'Left Back', 'def'], ['RB', 'Right Back', 'def'],
+  ['LWB', 'Left Wing Back', 'def'], ['RWB', 'Right Wing Back', 'def'], ['D', 'Defender', 'def'],
+  ['DMF', 'Defensive Midfielder', 'mid'], ['CDM', 'Defensive Midfielder', 'mid'],
+  ['CMF', 'Central Midfielder', 'mid'], ['CM', 'Central Midfielder', 'mid'],
+  ['LMF', 'Left Midfielder', 'mid'], ['LM', 'Left Midfielder', 'mid'],
+  ['RMF', 'Right Midfielder', 'mid'], ['RM', 'Right Midfielder', 'mid'],
+  ['AMF', 'Attacking Midfielder', 'mid'], ['CAM', 'Attacking Midfielder', 'mid'], ['C', 'Midfielder', 'mid'],
+  ['LWF', 'Left Wing Forward', 'fwd'], ['LW', 'Left Winger', 'fwd'],
+  ['RWF', 'Right Wing Forward', 'fwd'], ['RW', 'Right Winger', 'fwd'],
+  ['SS', 'Second Striker', 'fwd'], ['CF', 'Center Forward', 'fwd'], ['ST', 'Striker', 'fwd'], ['A', 'Forward', 'fwd'],
+];
+const KNOWN = new Map(KNOWN_ROLES.map(([code, name, area], order) => [code, { code, name, area, order }]));
+
+// Column headers recognised in a spreadsheet, in order of preference.
+const HEADERS = {
+  name: ['name', 'player', 'player name', 'nome', 'giocatore', 'nome giocatore', 'calciatore', 'nominativo', 'full name'],
+  role: ['role', 'ruolo', 'position', 'pos', 'posizione', 'r'],
+  overall: ['overall', 'ovr', 'overall rating', 'rating', 'score', 'punteggio', 'valutazione', 'voto', 'media',
+    'punti', 'points', 'value', 'valore', 'quotazione', 'qt a'],
+};
+
+const $ = (sel, root = document) => root.querySelector(sel);
+
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  if (props) {
+    for (const [key, value] of Object.entries(props)) {
+      if (value == null || value === false) continue;
+      if (key === 'class') el.className = value;
+      else if (key === 'dataset') Object.assign(el.dataset, value);
+      else el.setAttribute(key, value === true ? '' : String(value));
+    }
+  }
+  for (const kid of kids.flat(Infinity)) {
+    if (kid == null || kid === false) continue;
+    el.append(kid instanceof Node ? kid : String(kid));
+  }
+  return el;
+}
+
+const fmtOvr = x => (Number.isInteger(x) ? String(x) : String(Math.round(x * 100) / 100));
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const newId = () => 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+function formatWhen(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  try {
+    return new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(d);
+  } catch {
+    return d.toLocaleString();
+  }
+}
+
+/* ------------------------------------------------------------- the model */
+
+// rows: [[name, role, overall], ...] in spreadsheet order. A player's id is its index.
+function buildModel(rows) {
+  const roleMap = new Map();
+  const players = rows.map(([name, role, overall], id) => {
+    const raw = String(role).trim();
+    const known = KNOWN.get(raw.toUpperCase());
+    const key = known ? known.code : raw.toLowerCase();
+    let r = roleMap.get(key);
+    if (!r) {
+      r = known
+        ? { key, code: known.code, name: known.name, area: known.area, order: known.order, ids: [] }
+        : { key, code: raw, name: '', area: 'oth', order: 1000 + roleMap.size, ids: [] };
+      roleMap.set(key, r);
+    }
+    r.ids.push(id);
+    return { id, name: String(name), overall: Number(overall), role: r, rank: 1 };
+  });
+  const roles = [...roleMap.values()].sort((a, b) => a.order - b.order);
+  for (const r of roles) {
+    // Highest overall first; ties keep the spreadsheet order and share a rank.
+    r.ids.sort((a, b) => players[b].overall - players[a].overall || a - b);
+    r.ids.forEach((id, i) => {
+      const prev = i > 0 ? players[r.ids[i - 1]] : null;
+      players[id].rank = prev && prev.overall === players[id].overall ? prev.rank : i + 1;
+    });
+  }
+  return { players, roles, roleByKey: roleMap };
+}
+
+/* ------------------------------------------------- reading spreadsheets */
+
+class ReadError extends Error {}
+
+async function readSpreadsheetFile(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!bytes.length) throw new ReadError('The file is empty.');
+  let tables;
+  if (bytes[0] === 0x50 && bytes[1] === 0x4b) {
+    tables = await readXlsx(bytes);
+  } else if (bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0) {
+    throw new ReadError('This is an older Excel file (.xls). Open it in Excel, Numbers or LibreOffice, save it as .xlsx and load it again.');
+  } else {
+    tables = [{ name: file.name, rows: parseCsv(decodeText(bytes)) }];
+  }
+  return extractPlayers(tables);
+}
+
+function openZip(bytes) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const damaged = () => new ReadError('The file is damaged or is not an Excel workbook (.xlsx).');
+  let end = -1;
+  for (let i = bytes.length - 22, min = Math.max(0, bytes.length - 22 - 0xffff); i >= min; i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { end = i; break; }
+  }
+  if (end < 0) throw damaged();
+  const count = view.getUint16(end + 10, true);
+  const entries = new Map();
+  const utf8 = new TextDecoder();
+  let p = view.getUint32(end + 16, true);
+  for (let i = 0; i < count; i++) {
+    if (p + 46 > bytes.length || view.getUint32(p, true) !== 0x02014b50) throw damaged();
+    const nameLen = view.getUint16(p + 28, true);
+    const name = utf8.decode(bytes.subarray(p + 46, p + 46 + nameLen)).replace(/^\/+/, '');
+    entries.set(name.toLowerCase(), {
+      method: view.getUint16(p + 10, true),
+      size: view.getUint32(p + 20, true),
+      offset: view.getUint32(p + 42, true),
+    });
+    p += 46 + nameLen + view.getUint16(p + 30, true) + view.getUint16(p + 32, true);
+  }
+  async function read(path) {
+    const e = entries.get(path.toLowerCase());
+    if (!e) throw damaged();
+    if (e.offset + 30 > bytes.length || view.getUint32(e.offset, true) !== 0x04034b50) throw damaged();
+    const start = e.offset + 30 + view.getUint16(e.offset + 26, true) + view.getUint16(e.offset + 28, true);
+    const data = bytes.subarray(start, start + e.size);
+    if (e.method === 0) return data;
+    if (e.method === 8) return inflateRaw(data);
+    throw new ReadError('This workbook is compressed in a way the program cannot read. Save it again as .xlsx and load it again.');
+  }
+  return {
+    has: path => entries.has(path.toLowerCase()),
+    read,
+    text: async path => new TextDecoder().decode(await read(path)),
+  };
+}
+
+async function inflateRaw(data) {
+  let stream;
+  try {
+    stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  } catch {
+    throw new ReadError('This browser cannot open .xlsx files. Use a recent Chrome, Edge, Firefox or Safari, or save the list as CSV.');
+  }
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+function parseXml(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new ReadError('Part of the workbook could not be read. Save it again as .xlsx and load it again.');
+  return doc;
+}
+
+const byTag = (node, name) => Array.from(node.getElementsByTagNameNS('*', name));
+const childByTag = (node, name) => Array.from(node.children).find(c => c.localName === name) || null;
+const unescapeOoxml = s => s.replace(/_x([0-9a-fA-F]{4})_/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+
+function richText(el) {
+  let s = '';
+  for (const t of byTag(el, 't')) {
+    if (t.parentNode && t.parentNode.localName === 'rPh') continue; // phonetic hints
+    s += t.textContent;
+  }
+  return unescapeOoxml(s);
+}
+
+function resolvePath(baseDir, target) {
+  const parts = (target.startsWith('/') ? target.slice(1) : baseDir + target).split('/');
+  const out = [];
+  for (const part of parts) {
+    if (part === '..') out.pop();
+    else if (part && part !== '.') out.push(part);
+  }
+  return out.join('/');
+}
+
+async function readRels(zip, path, baseDir) {
+  const rels = [];
+  if (!zip.has(path)) return rels;
+  for (const r of byTag(parseXml(await zip.text(path)), 'Relationship')) {
+    if (r.getAttribute('TargetMode') === 'External') continue;
+    rels.push({ id: r.getAttribute('Id'), type: r.getAttribute('Type') || '', target: resolvePath(baseDir, r.getAttribute('Target') || '') });
+  }
+  return rels;
+}
+
+async function readXlsx(bytes) {
+  const zip = openZip(bytes);
+  if (zip.has('mimetype') && (await zip.text('mimetype')).includes('opendocument')) {
+    throw new ReadError('This is an OpenDocument spreadsheet (.ods). Save it as Excel (.xlsx) and load it again.');
+  }
+  const rootRels = await readRels(zip, '_rels/.rels', '');
+  const office = rootRels.find(r => r.type.endsWith('/officeDocument'));
+  const wbPath = office ? office.target : 'xl/workbook.xml';
+  if (!zip.has(wbPath)) throw new ReadError('This file is not an Excel workbook (.xlsx).');
+  const wbDir = wbPath.slice(0, wbPath.lastIndexOf('/') + 1);
+  const wbRels = await readRels(zip, wbDir + '_rels/' + wbPath.slice(wbDir.length) + '.rels', wbDir);
+
+  const shared = [];
+  const ssRel = wbRels.find(r => r.type.endsWith('/sharedStrings'));
+  const ssPath = ssRel ? ssRel.target : wbDir + 'sharedStrings.xml';
+  if (zip.has(ssPath)) {
+    for (const si of byTag(parseXml(await zip.text(ssPath)), 'si')) shared.push(richText(si));
+  }
+
+  const tables = [];
+  for (const sheet of byTag(parseXml(await zip.text(wbPath)), 'sheet')) {
+    const idAttr = Array.from(sheet.attributes).find(a => a.localName === 'id' && /relationships/.test(a.namespaceURI || ''));
+    const rel = idAttr && wbRels.find(r => r.id === idAttr.value);
+    if (!rel || !zip.has(rel.target)) continue;
+    tables.push({ name: sheet.getAttribute('name') || 'Sheet', load: async () => parseSheet(parseXml(await zip.text(rel.target)), shared) });
+  }
+  if (!tables.length) throw new ReadError('The workbook has no sheets the program can read.');
+  return tables;
+}
+
+function colIndex(ref) {
+  let n = 0;
+  for (const ch of ref.toUpperCase()) {
+    const c = ch.charCodeAt(0);
+    if (c < 65 || c > 90) break;
+    n = n * 26 + (c - 64);
+  }
+  return n - 1;
+}
+
+function cellValue(c, shared) {
+  const type = c.getAttribute('t') || 'n';
+  if (type === 'inlineStr') {
+    const is = childByTag(c, 'is');
+    return is ? richText(is) : '';
+  }
+  const v = childByTag(c, 'v');
+  if (!v) return null;
+  const s = v.textContent;
+  if (type === 's') return shared[parseInt(s, 10)] ?? '';
+  if (type === 'str') return unescapeOoxml(s);
+  if (type === 'e') return null; // #N/A and other formula errors
+  if (type === 'b') return s === '1';
+  const n = Number(s);
+  return s.trim() !== '' && Number.isFinite(n) ? n : s;
+}
+
+function parseSheet(doc, shared) {
+  const rows = [];
+  let nextRow = 0;
+  for (const row of byTag(doc, 'row')) {
+    const r = parseInt(row.getAttribute('r'), 10);
+    const ri = Number.isFinite(r) && r > 0 ? r - 1 : nextRow;
+    nextRow = ri + 1;
+    const cells = [];
+    let nextCol = 0;
+    for (const c of row.children) {
+      if (c.localName !== 'c') continue;
+      const ref = c.getAttribute('r');
+      const ci = ref ? colIndex(ref) : nextCol;
+      if (ci < 0) continue;
+      nextCol = ci + 1;
+      cells[ci] = cellValue(c, shared);
+    }
+    rows[ri] = cells;
+  }
+  return rows;
+}
+
+function decodeText(bytes) {
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) return new TextDecoder('utf-16le').decode(bytes);
+  if (bytes[0] === 0xfe && bytes[1] === 0xff) return new TextDecoder('utf-16be').decode(bytes);
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return new TextDecoder('windows-1252').decode(bytes); // CSV saved by Excel on Windows
+  }
+}
+
+function parseCsv(text) {
+  let delim = null;
+  const sep = /^sep=(.)\r?\n/i.exec(text);
+  if (sep) {
+    delim = sep[1];
+    text = text.slice(sep[0].length);
+  }
+  if (!delim) {
+    const lines = text.split(/\r\n|\n|\r/).filter(l => l.trim()).slice(0, 20);
+    let best = 0;
+    delim = ',';
+    for (const d of ['\t', ';', ',', '|']) {
+      const score = lines.length ? Math.min(...lines.map(l => l.split(d).length - 1)) : 0;
+      if (score > best) { best = score; delim = d; }
+    }
+  }
+  const rows = [];
+  let row = [];
+  let field = '';
+  let quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch !== '"') field += ch;
+      else if (text[i + 1] === '"') { field += '"'; i++; }
+      else quoted = false;
+    } else if (ch === '"' && field === '') {
+      quoted = true;
+    } else if (ch === delim) {
+      row.push(field);
+      field = '';
+    } else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = '';
+    } else {
+      field += ch;
+    }
+  }
+  if (field !== '' || row.length) {
+    row.push(field);
+    rows.push(row);
+  }
+  return rows;
+}
+
+const normHeader = v => String(v == null ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase().replace(/[^a-z0-9()]+/g, ' ').trim();
+const cleanText = v => (v == null || v === false ? '' : String(v).replace(/\s+/g, ' ').trim());
+
+function toNumber(v) {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  if (typeof v !== 'string') return null;
+  let s = v.replace(/\s/g, '');
+  if (!s) return null;
+  if (/^[+-]?\d+,\d+$/.test(s)) s = s.replace(',', '.'); // decimal comma
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+function findColumns(row) {
+  if (!row) return null;
+  const headers = Array.from(row, normHeader);
+  const cols = {};
+  for (const key of Object.keys(HEADERS)) {
+    const match = HEADERS[key].find(syn => headers.includes(syn));
+    if (!match) return null;
+    cols[key] = headers.indexOf(match);
+  }
+  return cols;
+}
+
+async function extractPlayers(tables) {
+  let emptySheet = null;
+  for (const table of tables) {
+    const rows = table.rows || await table.load();
+    for (let r = 0; r < Math.min(rows.length, 30); r++) {
+      const cols = findColumns(rows[r]);
+      if (!cols) continue;
+      const players = [];
+      const skipped = [];
+      for (let i = r + 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row) continue;
+        const name = cleanText(row[cols.name]);
+        const role = cleanText(row[cols.role]);
+        const overall = toNumber(row[cols.overall]);
+        if (!name && !role && overall === null) continue;
+        if (!name || !role || overall === null) {
+          skipped.push(i + 1);
+          continue;
+        }
+        players.push([name, role, Math.round(overall * 100) / 100]);
+      }
+      if (players.length) return { sheet: table.name, players, skipped };
+      emptySheet = emptySheet || table.name;
+      break;
+    }
+  }
+  if (emptySheet) {
+    throw new ReadError(`The sheet “${emptySheet}” has the columns Name, Role and Overall but no complete rows. If the values come from formulas, open the file in Excel or LibreOffice, save it and load it again.`);
+  }
+  throw new ReadError('No players found. The spreadsheet needs a sheet with the columns Name, Role and Overall (or Score), one player per row.');
+}
+
+/* ------------------------------------------------- writing the export */
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+
+function crc32(bytes) {
+  let c = 0xffffffff;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+// A zip archive with stored (uncompressed) entries.
+function zipStore(files) {
+  const utf8 = new TextEncoder();
+  const now = new Date();
+  const time = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+  const date = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+  for (const file of files) {
+    const name = utf8.encode(file.name);
+    const crc = crc32(file.data);
+    const size = file.data.length;
+    const local = new Uint8Array(30 + name.length);
+    const lv = new DataView(local.buffer);
+    lv.setUint32(0, 0x04034b50, true);
+    lv.setUint16(4, 20, true);
+    lv.setUint16(6, 0x0800, true);
+    lv.setUint16(10, time, true);
+    lv.setUint16(12, date, true);
+    lv.setUint32(14, crc, true);
+    lv.setUint32(18, size, true);
+    lv.setUint32(22, size, true);
+    lv.setUint16(26, name.length, true);
+    local.set(name, 30);
+    const entry = new Uint8Array(46 + name.length);
+    const cv = new DataView(entry.buffer);
+    cv.setUint32(0, 0x02014b50, true);
+    cv.setUint16(4, 20, true);
+    cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0x0800, true);
+    cv.setUint16(12, time, true);
+    cv.setUint16(14, date, true);
+    cv.setUint32(16, crc, true);
+    cv.setUint32(20, size, true);
+    cv.setUint32(24, size, true);
+    cv.setUint16(28, name.length, true);
+    cv.setUint32(42, offset, true);
+    entry.set(name, 46);
+    chunks.push(local, file.data);
+    central.push(entry);
+    offset += local.length + size;
+  }
+  const centralSize = central.reduce((n, c) => n + c.length, 0);
+  const end = new Uint8Array(22);
+  const ev = new DataView(end.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, files.length, true);
+  ev.setUint16(10, files.length, true);
+  ev.setUint32(12, centralSize, true);
+  ev.setUint32(16, offset, true);
+  const out = new Uint8Array(offset + centralSize + 22);
+  let at = 0;
+  for (const part of [...chunks, ...central, end]) {
+    out.set(part, at);
+    at += part.length;
+  }
+  return out;
+}
+
+const xmlEscape = s => String(s)
+  .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+function colName(i) {
+  let s = '';
+  for (let n = i + 1; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s;
+  return s;
+}
+
+// sheets: [{ name, header: [...], widths: [...], rows: [[...]] }]
+function buildWorkbook(sheets) {
+  const XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  const MAIN = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  const PKG = 'http://schemas.openxmlformats.org/package/2006/relationships';
+  const utf8 = new TextEncoder();
+  const files = [];
+  const add = (name, text) => files.push({ name, data: utf8.encode(XML + text) });
+
+  add('[Content_Types].xml',
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+    + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+    + '<Default Extension="xml" ContentType="application/xml"/>'
+    + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+    + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+    + sheets.map((s, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')
+    + '</Types>');
+  add('_rels/.rels',
+    `<Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
+  add('xl/workbook.xml',
+    `<workbook xmlns="${MAIN}" xmlns:r="${REL}"><bookViews><workbookView activeTab="0"/></bookViews><sheets>`
+    + sheets.map((s, i) => `<sheet name="${xmlEscape(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')
+    + '</sheets></workbook>');
+  add('xl/_rels/workbook.xml.rels',
+    `<Relationships xmlns="${PKG}">`
+    + sheets.map((s, i) => `<Relationship Id="rId${i + 1}" Type="${REL}/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')
+    + `<Relationship Id="rId${sheets.length + 1}" Type="${REL}/styles" Target="styles.xml"/></Relationships>`);
+  add('xl/styles.xml',
+    `<styleSheet xmlns="${MAIN}">`
+    + '<fonts count="2"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><name val="Calibri"/><family val="2"/></font></fonts>'
+    + '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'
+    + '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+    + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+    + '<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>'
+    + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
+    + '</styleSheet>');
+
+  sheets.forEach((sheet, i) => {
+    const rows = [sheet.header, ...sheet.rows].map((row, r) => {
+      const cells = row.map((value, c) => {
+        const ref = colName(c) + (r + 1);
+        const style = r === 0 ? ' s="1"' : '';
+        if (value == null || value === '') return '';
+        if (typeof value === 'number') return `<c r="${ref}"${style}><v>${value}</v></c>`;
+        return `<c r="${ref}"${style} t="inlineStr"><is><t xml:space="preserve">${xmlEscape(value)}</t></is></c>`;
+      });
+      return `<row r="${r + 1}">${cells.join('')}</row>`;
+    });
+    add(`xl/worksheets/sheet${i + 1}.xml`,
+      `<worksheet xmlns="${MAIN}">`
+      + `<sheetViews><sheetView workbookViewId="0"${i === 0 ? ' tabSelected="1"' : ''}><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`
+      + '<sheetFormatPr defaultRowHeight="15"/>'
+      + '<cols>' + sheet.widths.map((w, c) => `<col min="${c + 1}" max="${c + 1}" width="${w}" customWidth="1"/>`).join('') + '</cols>'
+      + `<sheetData>${rows.join('')}</sheetData></worksheet>`);
+  });
+  return zipStore(files);
+}
+
+// Excel sheet names: at most 31 characters, none of : \ / ? * [ ], unique regardless of case.
+function sheetNames(names) {
+  const used = new Set();
+  return names.map(n => {
+    let base = String(n).replace(/[\[\]:*?\/\\]/g, ' ').replace(/^'+|'+$/g, '').replace(/\s+/g, ' ').trim() || 'Team';
+    if (base.toLowerCase() === 'history') base = 'History team';
+    base = base.slice(0, 31).trim();
+    let name = base;
+    for (let k = 2; used.has(name.toLowerCase()); k++) {
+      const suffix = ` (${k})`;
+      name = base.slice(0, 31 - suffix.length).trim() + suffix;
+    }
+    used.add(name.toLowerCase());
+    return name;
+  });
+}
+
+/* ----------------------------------------------------------- storage */
+
+function validDraft(d) {
+  return !!d && typeof d === 'object' && d.v === 1
+    && Array.isArray(d.teams) && d.teams.length === TEAM_COUNT && d.teams.every(t => typeof t === 'string')
+    && !!d.source && Array.isArray(d.source.players) && d.source.players.length > 0
+    && d.source.players.every(p => Array.isArray(p) && p.length >= 3)
+    && Array.isArray(d.picks);
+}
+
+const store = {
+  ref: null,      // the viewer's own document, when this page runs as a Claude artifact
+  pending: null,
+  busy: false,
+  timer: 0,
+  retryDelay: 0,
+};
+
+function readLocal() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const d = raw ? JSON.parse(raw) : null;
+    return validDraft(d) ? d : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocal(d) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function queueRemote(d) {
+  store.pending = d;
+  if (!store.ref) return;
+  clearTimeout(store.timer);
+  store.timer = setTimeout(flushRemote, 800);
+}
+
+async function flushRemote() {
+  if (!store.ref || store.busy || !store.pending) return;
+  const d = store.pending;
+  store.pending = null;
+  store.busy = true;
+  store.retryDelay = 0;
+  try {
+    await store.ref.set({ v: 1, savedAt: d.savedAt, json: JSON.stringify(d) });
+  } catch (e) {
+    const code = e && e.code;
+    if (code === 'unavailable' || code === 'resource_exhausted') {
+      if (!store.pending) store.pending = d;
+      store.retryDelay = 3000 + Math.random() * 3000;
+    } else {
+      store.ref = null; // keep working with this browser's copy only
+    }
+  } finally {
+    store.busy = false;
+    if (store.pending && store.ref) {
+      clearTimeout(store.timer);
+      store.timer = setTimeout(flushRemote, store.retryDelay || 800);
+    }
+  }
+}
+
+/* ------------------------------------------------------------- state */
+
+const BUILTIN = (() => {
+  const raw = JSON.parse($('#builtin-data').textContent);
+  return { file: raw.file, sheet: raw.sheet, players: raw.players, skipped: [], builtIn: true };
+})();
+
+let draft = null;       // the saved draft: { v, id, createdAt, savedAt, source, teams, picks, seq }
+let model = null;       // players and roles of draft.source
+let picks = new Map();  // player id -> { team, seq }
+let setupSource = BUILTIN;
+let exportMode = window.claude && typeof window.claude.use === 'function' ? null : 'link';
+let downloads = null;
+let localWarned = false;
+let namesTouched = false;
+const ui = { screen: 'setup', tab: 'board', role: null, renaming: false };
+
+function setDraft(d) {
+  draft = d;
+  model = buildModel(d.source.players);
+  picks = new Map();
+  for (const entry of d.picks) {
+    const [id, team, seq] = Array.isArray(entry) ? entry : [];
+    if (Number.isInteger(id) && id >= 0 && id < model.players.length && Number.isInteger(team) && team >= 0 && team < TEAM_COUNT) {
+      picks.set(id, { team, seq: Number(seq) || 0 });
+    }
+  }
+  if (!model.roleByKey.has(ui.role)) ui.role = null;
+}
+
+function persist() {
+  draft.picks = Array.from(picks, ([id, p]) => [id, p.team, p.seq]);
+  draft.savedAt = new Date().toISOString();
+  const ok = writeLocal(draft);
+  queueRemote(draft);
+  if (!ok && !store.ref && !localWarned && !window.claude) {
+    localWarned = true;
+    toast('This browser is not keeping the draft. Export the teams before you close the page.');
+  }
+}
+
+function teamIds(team) {
+  const ids = [];
+  for (const [id, p] of picks) if (p.team === team) ids.push(id);
+  return ids;
+}
+
+function teamPlayers(team) {
+  const set = new Set(teamIds(team));
+  return model.roles.flatMap(r => r.ids.filter(id => set.has(id)).map(id => model.players[id]));
+}
+
+const available = role => role.ids.reduce((n, id) => n + (picks.has(id) ? 0 : 1), 0);
+
+function firstRoleKey() {
+  const r = model.roles.find(role => available(role) > 0) || model.roles[0];
+  return r ? r.key : null;
+}
+
+function assign(id, team) {
+  draft.seq = (Number(draft.seq) || 0) + 1;
+  picks.set(id, { team, seq: draft.seq });
+  persist();
+}
+
+function unassign(id) {
+  const prev = picks.get(id);
+  picks.delete(id);
+  persist();
+  return prev;
+}
+
+/* -------------------------------------------------------- setup screen */
+
+function buildTeamInputs(names) {
+  const wrap = $('#team-inputs');
+  wrap.replaceChildren();
+  for (let i = 0; i < TEAM_COUNT; i++) {
+    const id = `team-name-${i + 1}`;
+    wrap.append(h('div', { class: 'field' },
+      h('label', { for: id, class: 'num' }, i + 1),
+      h('input', {
+        id, class: 'input', type: 'text', maxlength: NAME_MAX, autocomplete: 'off', spellcheck: 'false',
+        placeholder: `Team ${i + 1}`, value: names[i] || '', 'aria-label': `Team ${i + 1} name`,
+      })));
+  }
+}
+
+function readTeamInputs() {
+  return Array.from({ length: TEAM_COUNT }, (_, i) => cleanText($(`#team-name-${i + 1}`).value));
+}
+
+function sameName(names) {
+  const seen = new Map();
+  for (const n of names) {
+    const key = n.toLowerCase();
+    if (seen.has(key)) return n;
+    seen.set(key, true);
+  }
+  return null;
+}
+
+function renderSetup() {
+  const card = $('#resume-card');
+  card.hidden = !draft;
+  if (draft) {
+    $('#resume-meta').textContent = `${picks.size} of ${draft.source.players.length} players assigned · ${draft.source.file} · last change ${formatWhen(draft.savedAt)}`;
+  }
+  const src = setupSource;
+  const roles = buildModel(src.players).roles;
+  $('#source-name').textContent = src.file;
+  $('#source-meta').textContent = `${plural(src.players.length, 'player', 'players')} in ${plural(roles.length, 'role', 'roles')}`
+    + (src.builtIn ? ' · built in' : src.sheet && src.sheet !== src.file ? ` · sheet “${src.sheet}”` : '');
+  $('#source-roles').replaceChildren(...roles.map(r =>
+    h('span', { class: `chip a-${r.area}`, title: r.name || null },
+      h('span', { class: 'code' }, r.code), h('span', { class: 'num' }, r.ids.length))));
+  const skipped = src.skipped || [];
+  const warning = $('#source-warning');
+  warning.hidden = !skipped.length;
+  if (skipped.length) {
+    const list = skipped.slice(0, 6).join(', ') + (skipped.length > 6 ? ` and ${skipped.length - 6} more` : '');
+    warning.textContent = `${plural(skipped.length, 'row was', 'rows were')} left out because the name, role or overall is missing (row ${list}).`;
+  }
+  $('#builtin-btn').hidden = !!src.builtIn;
+}
+
+async function loadFile(file) {
+  const error = $('#source-error');
+  error.hidden = true;
+  $('#source-meta').textContent = `Reading ${file.name}…`;
+  try {
+    const result = await readSpreadsheetFile(file);
+    setupSource = { file: file.name, sheet: result.sheet, players: result.players, skipped: result.skipped, builtIn: false };
+    announce(`${file.name} loaded: ${plural(result.players.length, 'player', 'players')}.`);
+  } catch (e) {
+    error.textContent = e instanceof ReadError ? e.message : 'The file could not be read. Check that it is an Excel (.xlsx) or CSV file.';
+    error.hidden = false;
+    if (!(e instanceof ReadError)) console.error(e);
+  }
+  renderSetup();
+}
+
+function startDraft() {
+  const names = readTeamInputs().map((n, i) => n || `Team ${i + 1}`);
+  const error = $('#setup-error');
+  const dup = sameName(names);
+  if (dup) {
+    error.textContent = `Two teams are called “${dup}”. Give each team a different name.`;
+    error.hidden = false;
+    return;
+  }
+  error.hidden = true;
+  const begin = () => {
+    const now = new Date().toISOString();
+    const src = setupSource;
+    setDraft({
+      v: 1, id: newId(), createdAt: now, savedAt: now,
+      source: { file: src.file, sheet: src.sheet || '', builtIn: !!src.builtIn, players: src.players },
+      teams: names, picks: [], seq: 0,
+    });
+    persist();
+    Object.assign(ui, { screen: 'draft', tab: 'board', role: firstRoleKey(), renaming: false });
+    render();
+    window.scrollTo(0, 0);
+  };
+  if (draft && picks.size > 0) {
+    confirmDialog({
+      title: 'Replace the draft in progress?',
+      body: `The current draft has ${plural(picks.size, 'assigned player', 'assigned players')}. Starting a new draft clears it.`,
+      confirm: 'Start new draft',
+    }).then(ok => { if (ok) begin(); });
+  } else {
+    begin();
+  }
+}
+
+/* -------------------------------------------------------- draft screen */
+
+function renderDraft() {
+  const keep = focusKey(document.activeElement);
+  renderTopbar();
+  renderSidebar();
+  if (ui.tab === 'board') renderBoard();
+  else renderTeam(ui.tab);
+  restoreFocus(keep);
+}
+
+function renderTopbar() {
+  const total = model.players.length;
+  $('#progress').replaceChildren(
+    `${draft.source.file} · `,
+    h('strong', { class: 'num' }, picks.size), ` of ${total} players assigned`);
+  $('#export-btn').hidden = !exportMode;
+}
+
+function renderSidebar() {
+  const counts = new Array(TEAM_COUNT).fill(0);
+  for (const p of picks.values()) counts[p.team]++;
+  const item = (tab, name, count) => h('button', {
+    type: 'button', class: 'nav-item', dataset: { tab: String(tab) }, 'aria-current': ui.tab === tab ? 'page' : null,
+  }, h('span', { class: 'name' }, name), count == null ? null : h('span', { class: 'count' }, count));
+  $('#sidebar').replaceChildren(h('div', { class: 'nav' },
+    h('p', { class: 'nav-label eyebrow' }, 'Draft'),
+    item('board', 'Draft board', null),
+    h('p', { class: 'nav-label eyebrow' }, 'Teams'),
+    draft.teams.map((name, t) => item(t, name, counts[t]))));
+}
+
+function renderBoard() {
+  if (!ui.role || !model.roleByKey.has(ui.role)) ui.role = firstRoleKey();
+  const role = model.roleByKey.get(ui.role);
+
+  const picker = h('section', { class: 'roles', 'aria-label': 'Roles' });
+  for (const area of AREA_ORDER) {
+    const roles = model.roles.filter(r => r.area === area);
+    if (!roles.length) continue;
+    picker.append(h('div', { class: `area a-${area}` },
+      h('p', { class: 'area-name eyebrow' }, AREA_LABELS[area]),
+      h('div', { class: 'area-roles' }, roles.map(r => {
+        const free = available(r);
+        return h('button', {
+          type: 'button', class: 'role-btn' + (free ? '' : ' done'), dataset: { role: r.key },
+          'aria-pressed': String(r === role), title: r.name || null,
+          'aria-label': `${r.code}${r.name ? ', ' + r.name : ''}: ${free} of ${r.ids.length} available`,
+        }, h('span', { class: 'code' }, r.code), h('span', { class: 'avail' }, `${free}/${r.ids.length}`));
+      }))));
+  }
+
+  const parts = [h('div', { class: 'roles-wrap' }, picker)];
+  if (role) {
+    const free = available(role);
+    parts.push(h('div', { class: 'list-head', id: 'list-head' },
+      h('h2', { class: `list-title a-${role.area}` },
+        h('span', { class: 'code' }, role.code), role.name ? h('span', { class: 'full' }, role.name) : null),
+      h('p', { class: 'list-meta' }, `${free} of ${role.ids.length} available · highest overall first`)));
+    const list = h('ol', { class: 'players', 'aria-label': `${role.code} players` });
+    for (const id of role.ids) {
+      const p = model.players[id];
+      const pick = picks.get(id);
+      const team = pick ? draft.teams[pick.team] : null;
+      list.append(h('li', null, h('button', {
+        type: 'button', class: 'p-row', dataset: { pid: String(id) }, disabled: !!pick,
+        'aria-label': pick ? `${p.name}, overall ${fmtOvr(p.overall)}, assigned to ${team}` : `${p.name}, overall ${fmtOvr(p.overall)}: assign to a team`,
+      },
+      h('span', { class: 'p-rank' }, p.rank),
+      h('span', { class: 'p-main' }, h('span', { class: 'p-name' }, p.name), pick ? h('span', { class: 'tag' }, team) : null),
+      h('span', { class: 'p-ovr' }, fmtOvr(p.overall)))));
+    }
+    parts.push(h('div', { class: 'table' },
+      h('div', { class: 'cols eyebrow', 'aria-hidden': 'true' }, h('span', null, '#'), h('span', null, 'Player'), h('span', { class: 'r' }, 'Overall')),
+      list));
+  }
+  $('#main').replaceChildren(...parts);
+}
+
+function renderTeam(t) {
+  const players = teamPlayers(t);
+  const name = draft.teams[t];
+  const parts = [];
+
+  const titleRow = ui.renaming
+    ? h('div', { class: 'rename' },
+      h('label', { class: 'sr-only', for: 'rename-input' }, 'Team name'),
+      h('input', { id: 'rename-input', class: 'input', type: 'text', maxlength: NAME_MAX, value: name, autocomplete: 'off', spellcheck: 'false' }),
+      h('button', { type: 'button', class: 'btn btn-primary', dataset: { action: 'rename-save' } }, 'Save'),
+      h('button', { type: 'button', class: 'btn', dataset: { action: 'rename-cancel' } }, 'Cancel'),
+      h('p', { id: 'rename-error', class: 'error', role: 'alert', hidden: true }))
+    : h('div', { class: 'team-title-row' },
+      h('h2', { class: 'display team-title' }, name),
+      h('button', { type: 'button', class: 'btn btn-small', dataset: { action: 'rename' } }, 'Rename'));
+
+  const avg = players.length ? players.reduce((s, p) => s + p.overall, 0) / players.length : null;
+  parts.push(h('div', { class: 'team-head' },
+    titleRow,
+    h('p', { class: 'team-stats' }, plural(players.length, 'player', 'players'),
+      avg == null ? null : ` · average overall ${avg.toFixed(1)}`),
+    h('div', { class: 'chips', 'aria-label': 'Players per role' }, model.roles.map(r => {
+      const n = players.filter(p => p.role === r).length;
+      return h('span', { class: `chip a-${r.area}` + (n ? '' : ' zero'), title: r.name || null },
+        h('span', { class: 'code' }, r.code), h('span', { class: 'num' }, n));
+    }))));
+
+  if (!players.length) {
+    parts.push(h('div', { class: 'card empty' },
+      h('p', null, `${name} has no players yet. Open the draft board, choose a role and assign a player to this team.`),
+      h('button', { type: 'button', class: 'btn btn-primary', dataset: { tab: 'board' } }, 'Open the draft board')));
+  } else {
+    const groups = h('div', { class: 'groups' });
+    for (const r of model.roles) {
+      const members = players.filter(p => p.role === r);
+      if (!members.length) continue;
+      groups.append(h('section', { class: `group a-${r.area}`, 'aria-label': r.name || r.code },
+        h('div', { class: 'group-head' },
+          h('span', { class: 'code' }, r.code), r.name ? h('span', { class: 'full' }, r.name) : null,
+          h('span', { class: 'n' }, members.length)),
+        h('ul', { class: 't-list' }, members.map(p => h('li', { class: 't-row' },
+          h('span', { class: 't-name' }, p.name),
+          h('span', { class: 'p-ovr t-ovr' }, fmtOvr(p.overall)),
+          h('button', { type: 'button', class: 'remove-btn', dataset: { remove: String(p.id) }, 'aria-label': `Remove ${p.name} from ${name}` }, 'Remove'))))));
+    }
+    parts.push(groups);
+  }
+  $('#main').replaceChildren(...parts);
+}
+
+function focusKey(el) {
+  if (!el || !$('#draft-screen').contains(el)) return null;
+  for (const key of ['tab', 'role', 'action']) if (el.dataset && el.dataset[key] != null) return [key, el.dataset[key]];
+  return null;
+}
+
+function restoreFocus(keep) {
+  if (!keep) return;
+  const el = $(`#draft-screen [data-${keep[0]}="${CSS.escape(keep[1])}"]`);
+  if (el && !el.disabled) el.focus({ preventScroll: true });
+}
+
+function go(tab) {
+  ui.tab = tab;
+  ui.renaming = false;
+  renderDraft();
+  window.scrollTo(0, 0);
+}
+
+function selectRole(key) {
+  ui.role = key;
+  renderDraft();
+  const head = $('#list-head');
+  const wrap = $('.roles-wrap');
+  if (!head) return;
+  const stickyBottom = getComputedStyle(wrap).position === 'sticky' ? wrap.getBoundingClientRect().bottom : 0;
+  const top = head.getBoundingClientRect().top;
+  if (top < stickyBottom) window.scrollBy(0, top - stickyBottom - 12);
+}
+
+/* ------------------------------------------------------------- assigning */
+
+let pendingPick = null;
+
+function openAssign(id) {
+  if (picks.has(id)) return;
+  const p = model.players[id];
+  pendingPick = id;
+  $('#assign-name').textContent = p.name;
+  $('#assign-ovr').textContent = fmtOvr(p.overall);
+  $('#assign-role').replaceChildren(h('span', { class: `code a-${p.role.area}` }, p.role.code), p.role.name ? ` · ${p.role.name}` : '');
+  const counts = new Array(TEAM_COUNT).fill(0);
+  const sameRole = new Array(TEAM_COUNT).fill(0);
+  for (const [pid, pick] of picks) {
+    counts[pick.team]++;
+    if (model.players[pid].role === p.role) sameRole[pick.team]++;
+  }
+  $('#assign-teams').replaceChildren(...draft.teams.map((name, t) => h('button', {
+    type: 'button', class: 'team-btn', dataset: { team: String(t) },
+  }, h('span', { class: 'tname' }, name),
+  h('span', { class: 'tmeta num' }, `${plural(counts[t], 'player', 'players')} · ${sameRole[t]} ${p.role.code}`))));
+  $('#assign-dialog').showModal();
+}
+
+function chooseTeam(team) {
+  const id = pendingPick;
+  pendingPick = null;
+  $('#assign-dialog').close();
+  if (id == null || picks.has(id)) return;
+  assign(id, team);
+  renderDraft();
+  focusNextRow(id);
+  const p = model.players[id];
+  toast(`${p.name} assigned to ${draft.teams[team]}`, () => {
+    const pick = picks.get(id);
+    if (pick && pick.team === team) {
+      unassign(id);
+      renderDraft();
+      announce(`${p.name} is available again.`);
+    }
+  });
+}
+
+function focusNextRow(id) {
+  const rows = Array.from(document.querySelectorAll('#main .p-row'));
+  const at = rows.findIndex(r => r.dataset.pid === String(id));
+  const next = rows.slice(at + 1).concat(rows.slice(0, Math.max(at, 0))).find(r => !r.disabled);
+  if (next) next.focus({ preventScroll: true });
+  else $('#main').focus({ preventScroll: true });
+}
+
+function removePlayer(id) {
+  const prev = picks.get(id);
+  if (!prev) return;
+  const rows = Array.from(document.querySelectorAll('#main .remove-btn'));
+  const at = rows.findIndex(b => b.dataset.remove === String(id));
+  unassign(id);
+  renderDraft();
+  const left = Array.from(document.querySelectorAll('#main .remove-btn'));
+  const target = left[Math.min(at, left.length - 1)];
+  if (target) target.focus({ preventScroll: true });
+  else $('#main').focus({ preventScroll: true });
+  const p = model.players[id];
+  const team = draft.teams[prev.team];
+  toast(`${p.name} removed from ${team}`, () => {
+    if (!picks.has(id)) {
+      picks.set(id, prev);
+      persist();
+      renderDraft();
+      announce(`${p.name} is back in ${team}.`);
+    }
+  });
+}
+
+function saveRename() {
+  const input = $('#rename-input');
+  if (!input) return;
+  const t = ui.tab;
+  const name = cleanText(input.value);
+  const error = $('#rename-error');
+  const clash = draft.teams.some((n, i) => i !== t && n.toLowerCase() === name.toLowerCase());
+  if (!name || clash) {
+    error.textContent = name ? `Another team is already called “${name}”.` : 'Type a name for the team.';
+    error.hidden = false;
+    input.focus();
+    return;
+  }
+  draft.teams[t] = name;
+  persist();
+  ui.renaming = false;
+  renderDraft();
+  const btn = $('#main [data-action="rename"]');
+  if (btn) btn.focus({ preventScroll: true });
+}
+
+/* --------------------------------------------------------------- export */
+
+function exportSheets() {
+  const names = sheetNames(['All teams', ...draft.teams, 'Unassigned']);
+  const byTeam = draft.teams.map((_, t) => teamPlayers(t));
+  const all = [];
+  byTeam.forEach((players, t) => players.forEach(p => all.push([draft.teams[t], p.role.code, p.name, p.overall])));
+  const sheets = [{ name: names[0], header: ['Team', 'Role', 'Player', 'Overall'], widths: [24, 8, 28, 9], rows: all }];
+  byTeam.forEach((players, t) => sheets.push({
+    name: names[t + 1], header: ['Role', 'Player', 'Overall'], widths: [8, 28, 9],
+    rows: players.map(p => [p.role.code, p.name, p.overall]),
+  }));
+  const free = model.roles.flatMap(r => r.ids.filter(id => !picks.has(id)).map(id => model.players[id]));
+  sheets.push({
+    name: names[names.length - 1], header: ['Role', 'Player', 'Overall'], widths: [8, 28, 9],
+    rows: free.map(p => [p.role.code, p.name, p.overall]),
+  });
+  return sheets;
+}
+
+async function exportTeams() {
+  const bytes = buildWorkbook(exportSheets());
+  const stamp = new Date().toISOString().slice(0, 10);
+  const filename = `soccer-draft-teams-${stamp}.xlsx`;
+  if (exportMode === 'capability' && downloads) {
+    try {
+      const result = await downloads.save({ filename, data: new Blob([bytes], { type: XLSX_MIME }) });
+      if (result && result.status === 'saved') toast('Teams exported.');
+    } catch (e) {
+      if (e && e.code === 'declined') return;
+      toast(e && e.code === 'rate_limited' ? 'Another save is already waiting for your answer.' : 'The export could not be saved. Try again.');
+    }
+    return;
+  }
+  const url = URL.createObjectURL(new Blob([bytes], { type: XLSX_MIME }));
+  const a = h('a', { href: url, download: filename, hidden: true });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+/* ------------------------------------------------ dialogs and messages */
+
+function confirmDialog({ title, body, confirm }) {
+  const dlg = $('#confirm-dialog');
+  $('#confirm-title').textContent = title;
+  $('#confirm-body').textContent = body;
+  $('#confirm-ok').textContent = confirm;
+  dlg.returnValue = '';
+  return new Promise(resolve => {
+    dlg.addEventListener('close', () => resolve(dlg.returnValue === 'ok'), { once: true });
+    dlg.showModal();
+  });
+}
+
+let toastTimer = 0;
+let toastUndo = null;
+
+function toast(message, undo) {
+  const el = $('#toast');
+  $('#toast-msg').textContent = message;
+  toastUndo = undo || null;
+  $('#toast-undo').hidden = !undo;
+  el.hidden = false;
+  el.classList.remove('in');
+  void el.offsetWidth;
+  el.classList.add('in');
+  announce(message);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, undo ? 7000 : 4000);
+}
+
+function hideToast() {
+  $('#toast').hidden = true;
+  toastUndo = null;
+}
+
+function announce(message) {
+  const live = $('#live');
+  live.textContent = '';
+  setTimeout(() => { live.textContent = message; }, 50);
+}
+
+/* ------------------------------------------------------------- render */
+
+function render() {
+  $('#setup-screen').hidden = ui.screen !== 'setup';
+  $('#draft-screen').hidden = ui.screen !== 'draft';
+  if (ui.screen === 'setup') renderSetup();
+  else renderDraft();
+}
+
+function openSetup() {
+  ui.screen = 'setup';
+  ui.renaming = false;
+  buildTeamInputs(draft ? draft.teams : []);
+  namesTouched = false;
+  $('#setup-error').hidden = true;
+  render();
+  window.scrollTo(0, 0);
+}
+
+function resume() {
+  if (!draft) return;
+  ui.screen = 'draft';
+  if (!ui.role || !model.roleByKey.has(ui.role)) ui.role = firstRoleKey();
+  render();
+  window.scrollTo(0, 0);
+}
+
+/* ------------------------------------------------------------- events */
+
+function wireEvents() {
+  $('#resume-btn').addEventListener('click', resume);
+  $('#start-btn').addEventListener('click', startDraft);
+  $('#load-btn').addEventListener('click', () => $('#file-input').click());
+  $('#builtin-btn').addEventListener('click', () => {
+    setupSource = BUILTIN;
+    $('#source-error').hidden = true;
+    renderSetup();
+  });
+  $('#file-input').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (file) loadFile(file);
+  });
+  $('#clear-names').addEventListener('click', () => {
+    buildTeamInputs([]);
+    namesTouched = true;
+    $('#team-name-1').focus();
+  });
+  $('#team-inputs').addEventListener('input', () => { namesTouched = true; });
+  $('#team-inputs').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !e.target.matches('input')) return;
+    e.preventDefault();
+    startDraft();
+  });
+
+  // Dropping a file anywhere on the setup screen loads it.
+  const box = $('#source-box');
+  const hasFiles = e => !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+  window.addEventListener('dragover', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    if (ui.screen === 'setup') box.classList.add('dragging');
+  });
+  window.addEventListener('dragleave', e => {
+    if (!e.relatedTarget) box.classList.remove('dragging');
+  });
+  window.addEventListener('drop', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    box.classList.remove('dragging');
+    const file = e.dataTransfer.files[0];
+    if (file && ui.screen === 'setup') loadFile(file);
+  });
+
+  $('#draft-screen').addEventListener('click', e => {
+    const el = e.target.closest('button');
+    if (!el || el.disabled) return;
+    const d = el.dataset;
+    if (d.tab != null) go(d.tab === 'board' ? 'board' : Number(d.tab));
+    else if (d.role != null) selectRole(d.role);
+    else if (d.pid != null) openAssign(Number(d.pid));
+    else if (d.remove != null) removePlayer(Number(d.remove));
+    else if (d.action === 'export') exportTeams();
+    else if (d.action === 'new-draft') openSetup();
+    else if (d.action === 'rename') {
+      ui.renaming = true;
+      renderDraft();
+      const input = $('#rename-input');
+      input.focus();
+      input.select();
+    } else if (d.action === 'rename-save') saveRename();
+    else if (d.action === 'rename-cancel') {
+      ui.renaming = false;
+      renderDraft();
+    }
+  });
+  $('#main').addEventListener('keydown', e => {
+    if (e.target.id !== 'rename-input' || (e.key !== 'Enter' && e.key !== 'Escape')) return;
+    // Focus moves to the Rename button below; without this the same key press would activate it.
+    e.preventDefault();
+    if (e.key === 'Enter') saveRename();
+    else {
+      ui.renaming = false;
+      renderDraft();
+      const btn = $('#main [data-action="rename"]');
+      if (btn) btn.focus({ preventScroll: true });
+    }
+  });
+
+  const assignDlg = $('#assign-dialog');
+  $('#assign-teams').addEventListener('click', e => {
+    const b = e.target.closest('[data-team]');
+    if (b) chooseTeam(Number(b.dataset.team));
+  });
+  assignDlg.addEventListener('close', () => { pendingPick = null; });
+
+  const confirmDlg = $('#confirm-dialog');
+  $('#confirm-ok').addEventListener('click', () => confirmDlg.close('ok'));
+  for (const dlg of [assignDlg, confirmDlg]) {
+    dlg.addEventListener('click', e => {
+      if (e.target === dlg || e.target.closest('[data-close]')) dlg.close();
+    });
+  }
+
+  $('#toast-undo').addEventListener('click', () => {
+    const undo = toastUndo;
+    hideToast();
+    if (undo) undo();
+  });
+
+  const topbar = $('#topbar');
+  const setTopbar = () => document.documentElement.style.setProperty('--topbar-h', topbar.offsetHeight + 'px');
+  if (window.ResizeObserver) new ResizeObserver(setTopbar).observe(topbar);
+  window.addEventListener('resize', setTopbar);
+
+  const flushNow = () => {
+    clearTimeout(store.timer);
+    flushRemote();
+  };
+  window.addEventListener('pagehide', flushNow);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushNow(); });
+}
+
+/* ------------------------------------- running inside a Claude artifact */
+
+// Inside the Claude viewer the draft is also kept in the viewer's own private document,
+// so it survives cleared browser storage and opens on other devices.
+async function connectClaude() {
+  const claude = window.claude;
+  if (!claude || typeof claude.use !== 'function') return;
+  claude.use('downloads').then(ns => {
+    if (!ns) return;
+    downloads = ns;
+    exportMode = 'capability';
+    if (ui.screen === 'draft') renderTopbar();
+  }).catch(() => {});
+  try {
+    const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+    if (!db || !user) return;
+    const uid = await user.id();
+    if (!uid) return;
+    const ref = db.doc(`data/users/${uid}/draft`);
+    const snap = await ref.get();
+    store.ref = ref;
+    if (snap.exists) {
+      const body = snap.data();
+      let saved = null;
+      try { saved = body && typeof body.json === 'string' ? JSON.parse(body.json) : null; } catch { saved = null; }
+      if (validDraft(saved) && (!draft || String(saved.savedAt) > String(draft.savedAt))) {
+        const wasDrafting = ui.screen === 'draft';
+        setDraft(saved);
+        writeLocal(saved);
+        if (wasDrafting) {
+          ui.renaming = false;
+          renderDraft();
+          toast('Loaded the latest saved copy of this draft.');
+        } else {
+          if (setupSource.builtIn && !saved.source.builtIn) setupSource = { ...saved.source, skipped: [] };
+          if (!namesTouched) buildTeamInputs(saved.teams);
+          renderSetup();
+        }
+        return;
+      }
+    }
+    if (draft) queueRemote(draft);
+  } catch {
+    store.ref = null;
+  }
+}
+
+/* -------------------------------------------------------------- start */
+
+function start(hotData) {
+  const saved = readLocal();
+  if (saved) setDraft(saved);
+  if (draft && !draft.source.builtIn) setupSource = { ...draft.source, skipped: [] };
+  buildTeamInputs(draft ? draft.teams : []);
+
+  const data = hotData || {};
+  if (data.setup) {
+    if (Array.isArray(data.setup.names)) {
+      buildTeamInputs(data.setup.names);
+      namesTouched = true;
+    }
+    if (data.setup.source && Array.isArray(data.setup.source.players)) setupSource = data.setup.source;
+  }
+  if (data.ui && draft && data.ui.screen === 'draft') {
+    ui.screen = 'draft';
+    ui.tab = data.ui.tab === 'board' || (Number.isInteger(data.ui.tab) && data.ui.tab >= 0 && data.ui.tab < TEAM_COUNT) ? data.ui.tab : 'board';
+    ui.role = model.roleByKey.has(data.ui.role) ? data.ui.role : null;
+  }
+
+  wireEvents();
+  render();
+  connectClaude();
+}
+
+const hot = window.claude && window.claude.hot;
+if (hot && typeof hot.snapshot === 'function') {
+  hot.snapshot(() => ({
+    ui: { screen: ui.screen, tab: ui.tab, role: ui.role },
+    setup: { names: readTeamInputs(), source: setupSource.builtIn ? null : setupSource },
+  }));
+}
+if (hot && typeof hot.ready === 'function') hot.ready(start);
+else start((hot && hot.data) || {});
+})();
+</script>
+</body>
+</html>
