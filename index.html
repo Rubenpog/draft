@@ -466,6 +466,58 @@ button:disabled { cursor: not-allowed; }
   overflow-wrap: anywhere;
 }
 .empty-row { padding: 16px; color: var(--muted); }
+.list-area { display: grid; gap: 18px; min-width: 0; }
+.cols.is-result,
+.p-row.is-result { grid-template-columns: 52px minmax(0, 1fr) 64px; }
+.p-role { font-size: 1.125rem; line-height: 1; }
+.p-row:disabled .p-role { color: var(--taken-ink); }
+.more-note { padding-inline: 2px; font-size: .84375rem; color: var(--muted); }
+
+/* Player search */
+.search-row { flex: 1 1 100%; min-width: 0; }
+.search-field { position: relative; display: flex; align-items: center; min-width: 0; }
+.search-field svg { position: absolute; left: 12px; width: 18px; height: 18px; color: var(--muted); pointer-events: none; }
+.search-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 76px 8px 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.search-input::placeholder { color: var(--muted); opacity: .85; }
+.search-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.search-input:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; border-color: var(--focus); background: var(--surface); }
+.search-clear {
+  position: absolute;
+  right: 6px;
+  min-height: 30px;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font-size: .8125rem;
+  font-weight: 600;
+}
+.search-clear:hover { background: var(--surface); color: var(--ink); }
+.search-kbd {
+  position: absolute;
+  right: 10px;
+  min-width: 22px;
+  padding: 1px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  color: var(--muted);
+  font: 600 .75rem/1.4 var(--font-body);
+  text-align: center;
+  pointer-events: none;
+}
+.search-field:focus-within .search-kbd,
+.search-field.has-value .search-kbd { display: none; }
+@media (hover: none), (pointer: coarse) {
+  .search-kbd { display: none; }
+}
 
 /* Team sheet */
 .team-head { display: grid; gap: 12px; }
@@ -653,6 +705,8 @@ dialog::backdrop { background: var(--backdrop); }
   .nav-label { display: none; }
   .nav-item { flex: none; width: auto; padding: 7px 12px; border-color: var(--line); background: var(--surface); }
   .nav-item .name { white-space: nowrap; }
+  /* While searching on a small screen the roles step aside, so the results sit right under the field. */
+  .roles.searching .area { display: none; }
 }
 @media (max-width: 600px) {
   .choices { grid-template-columns: minmax(0, 1fr); }
@@ -668,6 +722,7 @@ dialog::backdrop { background: var(--backdrop); }
   .panel { padding: 16px; }
   .roles { padding: 12px; gap: 12px 18px; }
   .cols, .p-row { grid-template-columns: 30px minmax(0, 1fr) 48px; gap: 10px; padding-inline: 12px; }
+  .cols.is-result, .p-row.is-result { grid-template-columns: 44px minmax(0, 1fr) 48px; }
   .list-title .code { font-size: 1.875rem; }
   .t-row { padding-left: 12px; }
   .dlg { padding: 18px; }
@@ -874,6 +929,7 @@ dialog::backdrop { background: var(--backdrop); }
 
 const TEAM_COUNT = 10;
 const NAME_MAX = 30;
+const SEARCH_LIMIT = 200;
 const STORAGE_KEY = 'soccer-draft.v1';
 const SETTINGS_KEY = 'soccer-draft.settings';
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -931,6 +987,8 @@ function h(tag, props, ...kids) {
 const fmtOvr = x => (Number.isInteger(x) ? String(x) : String(Math.round(x * 100) / 100));
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const newId = () => 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+// Lower case without accents, for searching names.
+const fold = s => String(s).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 function formatWhen(iso) {
   const d = new Date(iso);
@@ -959,7 +1017,7 @@ function buildModel(rows) {
       roleMap.set(key, r);
     }
     r.ids.push(id);
-    return { id, name: String(name), overall: Number(overall), role: r, rank: 1 };
+    return { id, name: String(name), key: fold(name), overall: Number(overall), role: r, rank: 1 };
   });
   const roles = [...roleMap.values()].sort((a, b) => a.order - b.order);
   for (const r of roles) {
@@ -1691,7 +1749,7 @@ let exportMode = window.claude && typeof window.claude.use === 'function' ? null
 let downloads = null;
 let localWarned = false;
 let namesTouched = false;
-const ui = { screen: 'home', tab: 'board', role: null, renaming: false };
+const ui = { screen: 'home', tab: 'board', role: null, renaming: false, search: '' };
 
 function setDraft(d) {
   draft = d;
@@ -1931,12 +1989,19 @@ async function requestNewDraft() {
 /* -------------------------------------------------------- draft screen */
 
 function renderDraft() {
-  const keep = focusKey(document.activeElement);
+  const active = document.activeElement;
+  const keep = focusKey(active);
+  const caret = active && active.id === 'player-search' ? [active.selectionStart, active.selectionEnd] : null;
   renderTopbar();
   renderSidebar();
   if (ui.tab === 'board') renderBoard();
   else renderTeam(ui.tab);
   restoreFocus(keep);
+  const input = caret && $('#player-search');
+  if (input) {
+    input.focus({ preventScroll: true });
+    input.setSelectionRange(caret[0], caret[1]);
+  }
 }
 
 function renderTopbar() {
@@ -1959,11 +2024,26 @@ function renderSidebar() {
     draft.teams.map((name, t) => item(t, name, counts[t]))));
 }
 
+function searchIcon() {
+  const t = document.createElement('template');
+  t.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>';
+  return t.content.firstChild;
+}
+
 function renderBoard() {
   if (!ui.role || !model.roleByKey.has(ui.role)) ui.role = firstRoleKey();
-  const role = model.roleByKey.get(ui.role);
-
-  const picker = h('section', { class: 'roles', 'aria-label': 'Roles' });
+  const picker = h('section', { class: 'roles', 'aria-label': 'Search and roles' },
+    h('div', { class: 'search-row' },
+      h('label', { class: 'sr-only', for: 'player-search' }, 'Search a player'),
+      h('div', { class: 'search-field' },
+        searchIcon(),
+        h('input', {
+          id: 'player-search', class: 'search-input', type: 'search', value: ui.search,
+          placeholder: 'Search a player by name', autocomplete: 'off', spellcheck: 'false', enterkeyhint: 'search',
+          'aria-keyshortcuts': '/', 'aria-controls': 'list-area',
+        }),
+        h('kbd', { class: 'search-kbd', 'aria-hidden': 'true' }, '/'),
+        h('button', { type: 'button', id: 'search-clear', class: 'search-clear', dataset: { action: 'clear-search' } }, 'Clear'))));
   for (const area of AREA_ORDER) {
     const roles = model.roles.filter(r => r.area === area);
     if (!roles.length) continue;
@@ -1972,41 +2052,108 @@ function renderBoard() {
       h('div', { class: 'area-roles' }, roles.map(r => {
         const free = available(r);
         return h('button', {
-          type: 'button', class: 'role-btn' + (free ? '' : ' done'), dataset: { role: r.key },
-          'aria-pressed': String(r === role), title: r.name || null,
+          type: 'button', class: 'role-btn' + (free ? '' : ' done'), dataset: { role: r.key }, title: r.name || null,
           'aria-label': `${r.code}${r.name ? ', ' + r.name : ''}: ${free} of ${r.ids.length} available`,
         }, h('span', { class: 'code' }, r.code), h('span', { class: 'avail' }, `${free}/${r.ids.length}`));
       }))));
   }
+  $('#main').replaceChildren(h('div', { class: 'roles-wrap' }, picker), h('div', { id: 'list-area', class: 'list-area' }));
+  renderList();
+}
 
-  const parts = [h('div', { class: 'roles-wrap' }, picker)];
-  if (role) {
-    const free = available(role);
-    const hidden = settings.hideAssigned && free < role.ids.length;
-    parts.push(h('div', { class: 'list-head', id: 'list-head' },
-      h('h2', { class: `list-title a-${role.area}` },
-        h('span', { class: 'code' }, role.code), role.name ? h('span', { class: 'full' }, role.name) : null),
-      h('p', { class: 'list-meta' }, `${free} of ${role.ids.length} available · ${hidden ? 'assigned players hidden' : 'highest overall first'}`)));
-    const list = h('ol', { class: 'players', 'aria-label': `${role.code} players` });
-    for (const id of role.ids) {
-      const p = model.players[id];
-      const pick = picks.get(id);
-      if (pick && settings.hideAssigned) continue;
-      const team = pick ? draft.teams[pick.team] : null;
-      list.append(h('li', null, h('button', {
-        type: 'button', class: 'p-row', dataset: { pid: String(id) }, disabled: !!pick,
-        'aria-label': pick ? `${p.name}, overall ${fmtOvr(p.overall)}, assigned to ${team}` : `${p.name}, overall ${fmtOvr(p.overall)}: assign to a team`,
-      },
-      h('span', { class: 'p-rank' }, p.rank),
-      h('span', { class: 'p-main' }, h('span', { class: 'p-name' }, p.name), pick ? h('span', { class: 'tag' }, team) : null),
-      h('span', { class: 'p-ovr' }, fmtOvr(p.overall)))));
-    }
-    if (!list.children.length) list.append(h('li', { class: 'empty-row' }, `Every ${role.code} player is assigned.`));
-    parts.push(h('div', { class: 'table' },
-      h('div', { class: 'cols eyebrow', 'aria-hidden': 'true' }, h('span', null, '#'), h('span', null, 'Player'), h('span', { class: 'r' }, 'Overall')),
-      list));
+const searchWords = () => fold(ui.search).split(/\s+/).filter(Boolean);
+
+// The list under the roles: the players of the chosen role, or the players matching the search.
+function renderList() {
+  const words = searchWords();
+  for (const b of document.querySelectorAll('#main .role-btn')) b.setAttribute('aria-pressed', String(!words.length && b.dataset.role === ui.role));
+  $('#main .roles').classList.toggle('searching', words.length > 0);
+  $('#main .search-field').classList.toggle('has-value', !!ui.search);
+  $('#search-clear').hidden = !ui.search;
+  $('#list-area').replaceChildren(...(words.length ? searchView(words) : roleView()));
+}
+
+function playerRow(p, inSearch) {
+  const pick = picks.get(p.id);
+  const team = pick ? draft.teams[pick.team] : null;
+  const label = `${p.name}${inSearch ? `, ${p.role.code}` : ''}, overall ${fmtOvr(p.overall)}`;
+  return h('button', {
+    type: 'button', class: 'p-row' + (inSearch ? ` is-result a-${p.role.area}` : ''), dataset: { pid: String(p.id) }, disabled: !!pick,
+    'aria-label': pick ? `${label}, assigned to ${team}` : `${label}: assign to a team`,
+  },
+  inSearch ? h('span', { class: 'code p-role', title: p.role.name || null }, p.role.code) : h('span', { class: 'p-rank' }, p.rank),
+  h('span', { class: 'p-main' }, h('span', { class: 'p-name' }, p.name), pick ? h('span', { class: 'tag' }, team) : null),
+  h('span', { class: 'p-ovr' }, fmtOvr(p.overall)));
+}
+
+function roleView() {
+  const role = model.roleByKey.get(ui.role);
+  if (!role) return [];
+  const free = available(role);
+  const hidden = settings.hideAssigned && free < role.ids.length;
+  const head = h('div', { class: 'list-head', id: 'list-head' },
+    h('h2', { class: `list-title a-${role.area}` },
+      h('span', { class: 'code' }, role.code), role.name ? h('span', { class: 'full' }, role.name) : null),
+    h('p', { class: 'list-meta' }, `${free} of ${role.ids.length} available · ${hidden ? 'assigned players hidden' : 'highest overall first'}`));
+  const list = h('ol', { class: 'players', 'aria-label': `${role.code} players` });
+  for (const id of role.ids) {
+    if (picks.has(id) && settings.hideAssigned) continue;
+    list.append(h('li', null, playerRow(model.players[id], false)));
   }
-  $('#main').replaceChildren(...parts);
+  if (!list.children.length) list.append(h('li', { class: 'empty-row' }, `Every ${role.code} player is assigned.`));
+  return [head, h('div', { class: 'table' },
+    h('div', { class: 'cols eyebrow', 'aria-hidden': 'true' }, h('span', null, '#'), h('span', null, 'Player'), h('span', { class: 'r' }, 'Overall')),
+    list)];
+}
+
+// Players whose name contains every typed word, ignoring case and accents. Names that start with
+// the first word come first, then names with a word that starts with it; then the highest overall.
+function findPlayers(words) {
+  const found = [];
+  for (const p of model.players) {
+    if (!words.every(w => p.key.includes(w))) continue;
+    const score = p.key.startsWith(words[0]) ? 0 : p.key.split(/[^\p{L}\p{N}]+/u).some(part => part.startsWith(words[0])) ? 1 : 2;
+    found.push([score, p]);
+  }
+  found.sort((a, b) => a[0] - b[0] || b[1].overall - a[1].overall || a[1].id - b[1].id);
+  return found.map(f => f[1]);
+}
+
+function searchView(words) {
+  const query = ui.search.trim();
+  const found = findPlayers(words);
+  const free = found.filter(p => !picks.has(p.id)).length;
+  const visible = settings.hideAssigned ? found.filter(p => !picks.has(p.id)) : found;
+  const shown = visible.slice(0, SEARCH_LIMIT);
+  const head = h('div', { class: 'list-head', id: 'list-head' },
+    h('h2', { class: 'list-title' }, h('span', { class: 'code' }, 'Search'), h('span', { class: 'full' }, `“${query}”`)),
+    h('p', { class: 'list-meta' }, found.length
+      ? `${plural(found.length, 'player matches', 'players match')} · ${free} available`
+      : 'No match'));
+  const list = h('ol', { class: 'players', 'aria-label': `Players matching ${query}` });
+  for (const p of shown) list.append(h('li', null, playerRow(p, true)));
+  if (!shown.length) {
+    list.append(h('li', { class: 'empty-row' }, found.length
+      ? `Every player matching “${query}” is assigned.`
+      : `No player matches “${query}”. Check the spelling, or type fewer letters.`));
+  }
+  const parts = [head, h('div', { class: 'table' },
+    h('div', { class: 'cols is-result eyebrow', 'aria-hidden': 'true' }, h('span', null, 'Role'), h('span', null, 'Player'), h('span', { class: 'r' }, 'Overall')),
+    list)];
+  if (visible.length > shown.length) {
+    parts.push(h('p', { class: 'more-note' }, `Showing the first ${SEARCH_LIMIT} of ${visible.length}. Type more letters to narrow the search.`));
+  }
+  return parts;
+}
+
+// Brings the top of the list into view, below the roles when they stay fixed on screen.
+function revealList() {
+  const head = $('#list-head');
+  const wrap = $('.roles-wrap');
+  if (!head || !wrap) return;
+  const stickyBottom = getComputedStyle(wrap).position === 'sticky' ? wrap.getBoundingClientRect().bottom : 0;
+  const top = head.getBoundingClientRect().top;
+  if (top < stickyBottom) window.scrollBy(0, top - stickyBottom - 12);
 }
 
 function renderTeam(t) {
@@ -2080,13 +2227,16 @@ function go(tab) {
 
 function selectRole(key) {
   ui.role = key;
+  ui.search = '';
   renderDraft();
-  const head = $('#list-head');
-  const wrap = $('.roles-wrap');
-  if (!head) return;
-  const stickyBottom = getComputedStyle(wrap).position === 'sticky' ? wrap.getBoundingClientRect().bottom : 0;
-  const top = head.getBoundingClientRect().top;
-  if (top < stickyBottom) window.scrollBy(0, top - stickyBottom - 12);
+  revealList();
+}
+
+function focusSearch() {
+  const input = $('#player-search');
+  if (!input) return;
+  input.focus({ preventScroll: true });
+  input.select();
 }
 
 /* ------------------------------------------------------------- assigning */
@@ -2120,7 +2270,9 @@ function chooseTeam(team) {
   if (id == null || picks.has(id)) return;
   assign(id, team);
   renderDraft();
-  focusNextPlayer(id);
+  // After a pick from the search, the field is ready for the next name (on touch screens the keyboard stays closed).
+  if (!searchWords().length) focusNextPlayer(id);
+  else if (!window.matchMedia('(pointer: coarse)').matches) focusSearch();
   const p = model.players[id];
   toast(`${p.name} assigned to ${draft.teams[team]}`, () => {
     const pick = picks.get(id);
@@ -2390,6 +2542,12 @@ function wireEvents() {
     else if (d.action === 'export') exportTeams();
     else if (d.action === 'new-draft') requestNewDraft();
     else if (d.action === 'home') show('home');
+    else if (d.action === 'clear-search') {
+      ui.search = '';
+      $('#player-search').value = '';
+      renderList();
+      focusSearch();
+    }
     else if (d.action === 'rename') {
       ui.renaming = true;
       renderDraft();
@@ -2402,7 +2560,28 @@ function wireEvents() {
       renderDraft();
     }
   });
+  $('#main').addEventListener('input', e => {
+    if (e.target.id !== 'player-search') return;
+    ui.search = e.target.value;
+    renderList();
+    revealList();
+  });
   $('#main').addEventListener('keydown', e => {
+    if (e.target.id === 'player-search') {
+      if (e.key === 'Enter') {
+        // Enter opens the first available player of the results.
+        e.preventDefault();
+        const words = searchWords();
+        const first = words.length ? findPlayers(words).find(p => !picks.has(p.id)) : null;
+        if (first) openAssign(first.id);
+      } else if (e.key === 'Escape' && e.target.value) {
+        e.preventDefault();
+        e.target.value = '';
+        ui.search = '';
+        renderList();
+      }
+      return;
+    }
     if (e.target.id !== 'rename-input' || (e.key !== 'Enter' && e.key !== 'Escape')) return;
     // Focus moves to the Rename button below; without this the same key press would activate it.
     e.preventDefault();
@@ -2443,6 +2622,13 @@ function wireEvents() {
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !$('#settings').hidden) closeSettings(true);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey || ui.screen !== 'draft') return;
+    if (e.target.closest('input, textarea, select, [contenteditable="true"]') || document.querySelector('dialog[open]')) return;
+    e.preventDefault();
+    if (ui.tab !== 'board') go('board');
+    focusSearch();
   });
   $('#settings').addEventListener('change', e => {
     const input = e.target;

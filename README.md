@@ -25,6 +25,7 @@ If a draft is in progress, starting a new one or opening a saved file asks first
 - Click a player, then the team to assign them to. The assignment is recorded at once.
 - An assigned player turns darker, shows the team name, and cannot be selected again.
 - **Undo** in the message at the bottom reverses the last action.
+- **Search:** to find a player without scrolling, type part of the name in the search field above the roles. The results come from every role, assigned players included (darker). **Enter** opens the first available player, **Esc** clears the field. On a computer, **/** jumps to the search field.
 
 ## Teams
 
