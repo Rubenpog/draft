@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap">
 <style>
 :root {
-  /* Layout: sticky top bar; the teams in a left rail, the draft board or a team sheet in the main column; one column on phones */
+  /* Layout: a slim bar with Back and Settings; the start page offers Continue or New draft; during the draft the teams sit in a left rail and the board or a team sheet in the main column; one column on phones */
   --bg: #edf0ec;
   --surface: #ffffff;
   --surface-2: #f3f6f2;
@@ -37,8 +37,9 @@
   --radius: 6px;
   --radius-lg: 10px;
 }
+/* The viewer's theme (data-theme) applies unless the Settings menu picks one (data-app-theme). */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme="light"]):not([data-app-theme="light"]) {
     --bg: #0c110e;
     --surface: #151c18;
     --surface-2: #1c2520;
@@ -63,7 +64,8 @@
     color-scheme: dark;
   }
 }
-:root[data-theme="dark"] {
+:root[data-theme="dark"]:not([data-app-theme="light"]),
+:root[data-app-theme="dark"] {
   --bg: #0c110e;
   --surface: #151c18;
   --surface-2: #1c2520;
@@ -87,6 +89,9 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .55);
   color-scheme: dark;
 }
+:root[data-app-theme="light"] { color-scheme: light; }
+/* Text size from the Settings menu: every font size below is in rem. */
+:root[data-size="large"] { font-size: 120%; }
 
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -97,7 +102,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: .9375rem;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
@@ -118,7 +123,7 @@ button:disabled { cursor: not-allowed; }
   line-height: .95;
 }
 .eyebrow {
-  font-size: 11.5px;
+  font-size: .71875rem;
   font-weight: 600;
   letter-spacing: .09em;
   text-transform: uppercase;
@@ -158,34 +163,89 @@ button:disabled { cursor: not-allowed; }
 .btn-primary:hover { background: color-mix(in srgb, var(--primary) 84%, var(--bg)); border-color: transparent; }
 .btn-quiet { border-color: transparent; background: transparent; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
 .btn-quiet:hover { border-color: transparent; color: var(--ink); }
-.btn-small { min-height: 34px; padding: 5px 12px; font-size: 13.5px; }
-.btn-large { min-height: 48px; padding: 12px 28px; font-size: 16px; }
+.btn-small { min-height: 34px; padding: 5px 12px; font-size: .84375rem; }
+.btn-large { min-height: 48px; padding: 12px 28px; font-size: 1rem; }
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+}
+.icon-btn:hover, .icon-btn[aria-expanded="true"] { border-color: var(--ink); }
+.icon-btn svg { width: 20px; height: 20px; }
 
-/* Setup screen */
-.setup {
+/* Bar above the start pages */
+.pagebar {
   max-width: 800px;
   margin: 0 auto;
-  padding-block: 48px 72px;
-  display: grid;
-  gap: 28px;
-}
-.setup-head { display: grid; gap: 14px; }
-.setup-head h1 { font-size: clamp(46px, 10vw, 84px); }
-.lead { max-width: 56ch; font-size: 16.5px; color: var(--muted); }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); }
-.resume {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px 24px;
-  padding: 18px 20px;
-  border-color: var(--line-strong);
+  gap: 12px;
+  padding-block: 16px 0;
 }
-.resume-text { display: grid; gap: 4px; min-width: 0; }
-.resume-title { font-size: 17px; font-weight: 700; }
-.new-draft { display: grid; gap: 10px; }
-.new-draft > .eyebrow { padding-inline: 2px; }
+.pagebar .icon-btn { margin-left: auto; }
+.back-btn { padding-inline: 4px; text-decoration: none; color: var(--ink); }
+.back-btn:hover { text-decoration: underline; }
+
+/* Start pages */
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-block: 16px 72px;
+  display: grid;
+  gap: 24px;
+}
+.page-head { display: grid; gap: 14px; }
+.title-xl { font-size: clamp(2.875rem, 10vw, 5.25rem); }
+.title { font-size: clamp(2.25rem, 7vw, 3.5rem); }
+.lead { max-width: 56ch; font-size: 1.03125rem; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.choice {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 10px;
+  min-height: 200px;
+  padding: 22px 22px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+.choice:hover { border-color: var(--ink); }
+.choice-title { font-size: 2.5rem; }
+.choice-text { max-width: 34ch; color: var(--muted); }
+.choice-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.choice-meta { font-size: .84375rem; font-weight: 600; }
+.choice-arrow { margin-left: auto; font-size: 1.5rem; line-height: 1; }
+.panel { display: grid; gap: 14px; padding: 20px; }
+.panel-title { font-size: 1.125rem; font-weight: 700; line-height: 1.25; }
+.last-draft { display: grid; gap: 8px; }
+.last-file { font-weight: 700; overflow-wrap: anywhere; }
+.last-teams { font-size: .84375rem; color: var(--muted); overflow-wrap: anywhere; }
+.dropzone {
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.dropzone.dragging { border: 1px solid var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent); }
+.note {
+  padding: 12px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: .875rem;
+}
 .step {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
@@ -198,26 +258,17 @@ button:disabled { cursor: not-allowed; }
   font-family: var(--font-display);
   font-stretch: 75%;
   font-weight: 800;
-  font-size: 30px;
+  font-size: 1.875rem;
   line-height: 1;
   color: var(--muted);
 }
 .step-body { display: grid; gap: 14px; min-width: 0; align-content: start; }
-.step-title { font-size: 18px; font-weight: 700; line-height: 1.25; }
+.step-title { font-size: 1.125rem; font-weight: 700; line-height: 1.25; }
 .step-title-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
 .step-title-row .btn-quiet { min-height: 30px; padding: 4px 6px; }
-.source {
-  display: grid;
-  gap: 8px;
-  padding: 14px 16px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius);
-  background: var(--surface-2);
-}
-.source.dragging { border: 1px solid var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent); }
 .source-name { font-weight: 700; overflow-wrap: anywhere; }
-.source-meta { font-size: 14px; color: var(--muted); }
-.warning { font-size: 13.5px; color: var(--ink); }
+.source-meta { font-size: .875rem; color: var(--muted); }
+.warning { font-size: .84375rem; color: var(--ink); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   display: inline-flex;
@@ -227,17 +278,17 @@ button:disabled { cursor: not-allowed; }
   border: 1px solid var(--line);
   border-radius: 4px;
   background: var(--surface);
-  font-size: 13px;
+  font-size: .8125rem;
 }
-.chip .code { font-size: 14.5px; }
+.chip .code { font-size: .90625rem; }
 .chip.zero { background: transparent; color: var(--muted); }
 .chip.zero .code { color: var(--muted); }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.hint { font-size: 13.5px; color: var(--muted); max-width: 64ch; }
-.error { font-size: 14px; font-weight: 600; color: var(--danger); }
+.hint { font-size: .84375rem; color: var(--muted); max-width: 64ch; }
+.error { font-size: .875rem; font-weight: 600; color: var(--danger); }
 .team-inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; }
 .field { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 8px; }
-.field label { font-size: 13px; color: var(--muted); text-align: right; }
+.field label { font-size: .8125rem; color: var(--muted); text-align: right; }
 .input {
   width: 100%;
   min-height: 42px;
@@ -257,7 +308,7 @@ button:disabled { cursor: not-allowed; }
   padding: 18px 20px;
   border-top: 1px solid var(--line);
 }
-.save-note { font-size: 13.5px; color: var(--muted); }
+.save-note { font-size: .84375rem; color: var(--muted); }
 .submit-group { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 16px; margin-left: auto; }
 
 /* Draft screen */
@@ -278,10 +329,13 @@ button:disabled { cursor: not-allowed; }
   align-items: center;
   gap: 6px 18px;
 }
-.brand-small { font-size: 25px; }
-.progress { min-width: 0; font-size: 13.5px; color: var(--muted); overflow-wrap: anywhere; }
+.brand-small { font-size: 1.5625rem; }
+.brand-btn { padding: 0; border: 0; background: transparent; color: var(--ink); }
+.brand-btn:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.progress { min-width: 0; font-size: .84375rem; color: var(--muted); overflow-wrap: anywhere; }
 .progress strong { color: var(--ink); font-weight: 700; }
-.topbar-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.topbar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+.topbar .icon-btn { width: 34px; height: 34px; }
 .layout {
   max-width: 1320px;
   margin: 0 auto;
@@ -311,7 +365,7 @@ button:disabled { cursor: not-allowed; }
 .nav-item:hover { background: var(--surface); border-color: var(--line); }
 .nav-item[aria-current="page"] { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
 .nav-item .name { min-width: 0; overflow-wrap: anywhere; }
-.nav-item .count { font-size: 13px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.nav-item .count { font-size: .8125rem; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
 .nav-item[aria-current="page"] .count { color: inherit; opacity: .75; }
 .main { display: grid; gap: 18px; min-width: 0; }
 .main:focus { outline: none; }
@@ -341,8 +395,8 @@ button:disabled { cursor: not-allowed; }
   border-radius: var(--radius);
   background: var(--surface);
 }
-.role-btn .code { font-size: 20px; line-height: 1; }
-.role-btn .avail { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.role-btn .code { font-size: 1.25rem; line-height: 1; }
+.role-btn .avail { font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .role-btn:hover { border-color: var(--area); }
 .role-btn.done { background: var(--taken-bg); border-color: var(--line); }
 .role-btn.done .code { color: var(--taken-ink); }
@@ -358,9 +412,9 @@ button:disabled { cursor: not-allowed; }
   padding-inline: 2px;
 }
 .list-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-width: 0; }
-.list-title .code { font-size: 36px; line-height: 1; }
-.list-title .full { font-size: 17px; font-weight: 600; }
-.list-meta { font-size: 13.5px; color: var(--muted); }
+.list-title .code { font-size: 2.25rem; line-height: 1; }
+.list-title .full { font-size: 1.0625rem; font-weight: 600; }
+.list-meta { font-size: .84375rem; color: var(--muted); }
 .table { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
 .cols, .p-row {
   display: grid;
@@ -384,14 +438,14 @@ button:disabled { cursor: not-allowed; }
 .p-row:not(:disabled):hover,
 .p-row:not(:disabled):active { background: var(--surface-2); }
 .p-row:not(:disabled):hover .p-name { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
-.p-rank { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.p-rank { font-size: .8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 .p-main { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
 .p-name { font-weight: 600; overflow-wrap: anywhere; }
 .p-ovr {
   font-family: var(--font-display);
   font-stretch: 75%;
   font-weight: 800;
-  font-size: 22px;
+  font-size: 1.375rem;
   line-height: 1;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -407,15 +461,16 @@ button:disabled { cursor: not-allowed; }
   border-radius: 999px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 12px;
+  font-size: .75rem;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+.empty-row { padding: 16px; color: var(--muted); }
 
 /* Team sheet */
 .team-head { display: grid; gap: 12px; }
 .team-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
-.team-title { min-width: 0; font-size: clamp(32px, 4.8vw, 48px); overflow-wrap: anywhere; }
+.team-title { min-width: 0; font-size: clamp(2rem, 4.8vw, 3rem); overflow-wrap: anywhere; }
 .team-stats { color: var(--muted); }
 .rename { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .rename .input { width: min(380px, 100%); }
@@ -429,9 +484,9 @@ button:disabled { cursor: not-allowed; }
   overflow: hidden;
 }
 .group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 11px 16px 9px; border-bottom: 1px solid var(--line); }
-.group-head .code { font-size: 22px; line-height: 1; }
+.group-head .code { font-size: 1.375rem; line-height: 1; }
 .group-head .full { font-weight: 600; }
-.group-head .n { margin-left: auto; font-size: 13px; color: var(--muted); }
+.group-head .n { margin-left: auto; font-size: .8125rem; color: var(--muted); }
 .t-list { list-style: none; margin: 0; padding: 0; }
 .t-list > li + li { border-top: 1px solid var(--line); }
 .t-row {
@@ -451,12 +506,53 @@ button:disabled { cursor: not-allowed; }
   border-radius: var(--radius);
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
+  font-size: .8125rem;
   font-weight: 600;
 }
 .remove-btn:hover { border-color: var(--danger); color: var(--danger); }
 .empty { display: grid; justify-items: start; gap: 12px; padding: 24px 20px; }
 .empty p { max-width: 52ch; color: var(--muted); }
+
+/* Settings menu */
+.settings {
+  position: fixed;
+  z-index: 70;
+  display: grid;
+  gap: 16px;
+  width: min(320px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+.set-group { display: grid; gap: 8px; }
+.set-label { font-size: .875rem; font-weight: 600; }
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.segmented label { position: relative; display: block; }
+.segmented input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.segmented span {
+  display: block;
+  padding: 7px 6px;
+  border-left: 1px solid var(--line-strong);
+  font-size: .84375rem;
+  font-weight: 600;
+  text-align: center;
+}
+.segmented label:first-child span { border-left: 0; }
+.segmented input:checked + span { background: var(--primary); color: var(--primary-ink); }
+.segmented input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: -3px; }
+.check { display: flex; align-items: flex-start; gap: 10px; font-size: .875rem; cursor: pointer; }
+.check input { flex: none; width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--primary); }
+.set-note { font-size: .78125rem; color: var(--muted); }
 
 /* Dialogs */
 dialog {
@@ -474,11 +570,11 @@ dialog::backdrop { background: var(--backdrop); }
 .dlg:focus { outline: none; }
 .dlg-head { display: grid; gap: 8px; }
 .dlg-player { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 6px 16px; }
-.dlg-name { min-width: 0; font-size: 34px; overflow-wrap: anywhere; }
+.dlg-name { min-width: 0; font-size: 2.125rem; overflow-wrap: anywhere; }
 .dlg-ovr { display: flex; align-items: baseline; gap: 8px; }
-.dlg-ovr .display { font-size: 34px; }
+.dlg-ovr .display { font-size: 2.125rem; }
 .dlg-role { font-weight: 600; }
-.dlg-title { font-size: 20px; font-weight: 700; }
+.dlg-title { font-size: 1.25rem; font-weight: 700; }
 .team-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .team-btn {
   display: grid;
@@ -494,7 +590,7 @@ dialog::backdrop { background: var(--backdrop); }
 .team-btn:hover,
 .team-btn:active { border-color: var(--ink); background: var(--surface-2); }
 .team-btn .tname { font-weight: 700; overflow-wrap: anywhere; }
-.team-btn .tmeta { font-size: 12.5px; color: var(--muted); }
+.team-btn .tmeta { font-size: .78125rem; color: var(--muted); }
 .dlg-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 
 /* Toast */
@@ -531,7 +627,7 @@ dialog::backdrop { background: var(--backdrop); }
   from { opacity: 0; transform: translate(-50%, 8px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
-.noscript { max-width: 600px; margin: 48px auto; font-size: 16px; }
+.noscript { max-width: 600px; margin: 48px auto; font-size: 1rem; }
 
 @media (min-width: 881px) and (min-height: 700px) {
   .roles-wrap {
@@ -558,19 +654,24 @@ dialog::backdrop { background: var(--backdrop); }
   .nav-item { flex: none; width: auto; padding: 7px 12px; border-color: var(--line); background: var(--surface); }
   .nav-item .name { white-space: nowrap; }
 }
+@media (max-width: 600px) {
+  .choices { grid-template-columns: minmax(0, 1fr); }
+  .choice { min-height: 0; }
+}
 @media (max-width: 560px) {
-  .setup { padding-block: 28px 56px; gap: 22px; }
+  .page { padding-block: 12px 56px; gap: 20px; }
   .step { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 18px 16px; }
-  .step-no { font-size: 22px; }
+  .step-no { font-size: 1.375rem; }
   .team-inputs { grid-template-columns: minmax(0, 1fr); }
   .setup-submit { padding: 16px; }
   .submit-group { margin-left: 0; justify-content: flex-start; }
+  .panel { padding: 16px; }
   .roles { padding: 12px; gap: 12px 18px; }
   .cols, .p-row { grid-template-columns: 30px minmax(0, 1fr) 48px; gap: 10px; padding-inline: 12px; }
-  .list-title .code { font-size: 30px; }
+  .list-title .code { font-size: 1.875rem; }
   .t-row { padding-left: 12px; }
   .dlg { padding: 18px; }
-  .dlg-name, .dlg-ovr .display { font-size: 28px; }
+  .dlg-name, .dlg-ovr .display { font-size: 1.75rem; }
 }
 @media (max-width: 340px) {
   .team-grid { grid-template-columns: minmax(0, 1fr); }
@@ -579,75 +680,127 @@ dialog::backdrop { background: var(--backdrop); }
   .toast.in { animation: none; }
 }
 </style>
+<script>
+// Apply the saved appearance before the page is drawn.
+(function () {
+  try {
+    var s = JSON.parse(window.localStorage.getItem('soccer-draft.settings') || '{}');
+    if (s.theme === 'light' || s.theme === 'dark') document.documentElement.setAttribute('data-app-theme', s.theme);
+    if (s.size === 'large') document.documentElement.setAttribute('data-size', 'large');
+  } catch { /* settings are optional */ }
+})();
+</script>
 </head>
 <body>
 <noscript><p class="noscript">Soccer Draft needs JavaScript. Turn it on in your browser and reload the page.</p></noscript>
 
-<main id="setup-screen" class="setup" aria-labelledby="setup-title">
-  <header class="setup-head">
-    <h1 id="setup-title" class="display">Soccer Draft</h1>
-    <p class="lead">Name the ten teams, then assign the players role by role. Assigned players stay locked until they are removed from their team.</p>
+<header id="pagebar" class="pagebar">
+  <button type="button" id="back-btn" class="btn btn-quiet back-btn" hidden><span aria-hidden="true">←</span> Back</button>
+  <button type="button" class="icon-btn" data-settings aria-label="Settings" aria-controls="settings" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h9M17 18h3"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="15" cy="18" r="2"/></svg>
+  </button>
+</header>
+
+<main id="home-screen" class="page" aria-labelledby="home-title">
+  <header class="page-head">
+    <h1 id="home-title" class="display title-xl">Soccer Draft</h1>
+    <p class="lead">Run a ten-team draft from a spreadsheet of players. Continue a saved draft or start a new one.</p>
   </header>
+  <div class="choices">
+    <button type="button" id="choose-continue" class="choice">
+      <span class="display choice-title">Continue</span>
+      <span class="choice-text">Pick up the last draft, or open a draft saved with Export teams (.xlsx).</span>
+      <span class="choice-foot"><span id="home-continue-meta" class="choice-meta"></span><span class="choice-arrow" aria-hidden="true">→</span></span>
+    </button>
+    <button type="button" id="choose-new" class="choice">
+      <span class="display choice-title">New draft</span>
+      <span class="choice-text">Choose the list of players and name the ten teams.</span>
+      <span class="choice-foot"><span class="choice-arrow" aria-hidden="true">→</span></span>
+    </button>
+  </div>
+</main>
 
-  <section id="resume-card" class="card resume" aria-labelledby="resume-title" hidden>
-    <div class="resume-text">
-      <h2 id="resume-title" class="resume-title">Draft in progress</h2>
-      <p id="resume-meta" class="muted"></p>
-    </div>
-    <button type="button" id="resume-btn" class="btn btn-primary">Resume draft</button>
+<main id="continue-screen" class="page" aria-labelledby="continue-title" hidden>
+  <header class="page-head">
+    <h1 id="continue-title" class="display title">Continue</h1>
+    <p class="lead">Pick up the last draft, or open a draft saved as a file.</p>
+  </header>
+  <section class="card panel" aria-labelledby="last-title">
+    <h2 id="last-title" class="panel-title">Last draft</h2>
+    <div id="last-draft" class="last-draft"></div>
   </section>
+  <section class="card panel" aria-labelledby="import-title">
+    <h2 id="import-title" class="panel-title">Saved draft file</h2>
+    <div id="import-box" class="dropzone">
+      <p>Open a file made with <strong>Export teams (.xlsx)</strong>. The draft continues where it was saved.</p>
+      <div class="actions">
+        <button type="button" id="import-btn" class="btn">Open a saved draft</button>
+        <span id="import-status" class="hint" role="status"></span>
+      </div>
+      <p class="hint">You can also drop the file on this page.</p>
+    </div>
+    <p id="import-error" class="error" role="alert" hidden></p>
+    <input type="file" id="import-input" accept=".xlsx" hidden>
+  </section>
+</main>
 
-  <section class="new-draft" aria-labelledby="new-title">
-    <h2 id="new-title" class="eyebrow">New draft</h2>
-    <div class="card">
-      <div class="step">
-        <span class="step-no" aria-hidden="true">1</span>
-        <div class="step-body">
-          <h3 class="step-title">Spreadsheet</h3>
-          <div id="source-box" class="source">
-            <p id="source-name" class="source-name"></p>
-            <p id="source-meta" class="source-meta"></p>
-            <div id="source-roles" class="chips"></div>
-            <p id="source-warning" class="warning" hidden></p>
-          </div>
-          <p id="source-error" class="error" role="alert" hidden></p>
-          <div class="actions">
-            <button type="button" id="load-btn" class="btn">Load a different spreadsheet</button>
-            <button type="button" id="builtin-btn" class="btn btn-quiet" hidden>Use the built-in list</button>
-          </div>
-          <p class="hint">Excel (.xlsx) or CSV. The sheet needs the columns Name, Role and Overall (Score also works), one player per row. You can also drop the file on this page.</p>
-          <input type="file" id="file-input" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden>
+<main id="setup-screen" class="page" aria-labelledby="setup-title" hidden>
+  <header class="page-head">
+    <h1 id="setup-title" class="display title">New draft</h1>
+    <p class="lead">Choose the list of players and name the ten teams. Assigned players stay locked until they are removed from their team.</p>
+  </header>
+  <p id="replace-note" class="note" hidden></p>
+  <div class="card">
+    <div class="step">
+      <span class="step-no" aria-hidden="true">1</span>
+      <div class="step-body">
+        <h2 class="step-title">Spreadsheet</h2>
+        <div id="source-box" class="dropzone">
+          <p id="source-name" class="source-name"></p>
+          <p id="source-meta" class="source-meta"></p>
+          <div id="source-roles" class="chips"></div>
+          <p id="source-warning" class="warning" hidden></p>
         </div>
-      </div>
-      <div class="step">
-        <span class="step-no" aria-hidden="true">2</span>
-        <div class="step-body">
-          <div class="step-title-row">
-            <h3 id="names-title" class="step-title">Team names</h3>
-            <button type="button" id="clear-names" class="btn btn-quiet btn-small">Clear names</button>
-          </div>
-          <div id="team-inputs" class="team-inputs" role="group" aria-labelledby="names-title"></div>
+        <p id="source-error" class="error" role="alert" hidden></p>
+        <div class="actions">
+          <button type="button" id="load-btn" class="btn">Load a different spreadsheet</button>
+          <button type="button" id="builtin-btn" class="btn btn-quiet" hidden>Use the built-in list</button>
         </div>
-      </div>
-      <div class="setup-submit">
-        <p class="save-note">The draft saves automatically as you go.</p>
-        <div class="submit-group">
-          <p id="setup-error" class="error" role="alert" hidden></p>
-          <button type="button" id="start-btn" class="btn btn-primary btn-large">Start draft</button>
-        </div>
+        <p class="hint">Excel (.xlsx) or CSV. The sheet needs the columns Name, Role and Overall (Score also works), one player per row. You can also drop the file on this page.</p>
+        <input type="file" id="file-input" accept=".xlsx,.xlsm,.csv,.tsv,.txt" hidden>
       </div>
     </div>
-  </section>
+    <div class="step">
+      <span class="step-no" aria-hidden="true">2</span>
+      <div class="step-body">
+        <div class="step-title-row">
+          <h2 id="names-title" class="step-title">Team names</h2>
+          <button type="button" id="clear-names" class="btn btn-quiet btn-small">Clear names</button>
+        </div>
+        <div id="team-inputs" class="team-inputs" role="group" aria-labelledby="names-title"></div>
+      </div>
+    </div>
+    <div class="setup-submit">
+      <p class="save-note">The draft saves automatically as you go.</p>
+      <div class="submit-group">
+        <p id="setup-error" class="error" role="alert" hidden></p>
+        <button type="button" id="start-btn" class="btn btn-primary btn-large">Start draft</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <div id="draft-screen" hidden>
   <header id="topbar" class="topbar">
     <div class="topbar-inner">
-      <p class="display brand-small">Soccer Draft</p>
+      <button type="button" class="display brand-small brand-btn" data-action="home" aria-label="Soccer Draft: start page">Soccer Draft</button>
       <p id="progress" class="progress"></p>
       <div class="topbar-actions">
         <button type="button" id="export-btn" class="btn btn-small" data-action="export">Export teams (.xlsx)</button>
         <button type="button" class="btn btn-small" data-action="new-draft">New draft</button>
+        <button type="button" class="icon-btn" data-settings aria-label="Settings" aria-controls="settings" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h9M17 18h3"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="15" cy="18" r="2"/></svg>
+        </button>
       </div>
     </div>
   </header>
@@ -656,6 +809,30 @@ dialog::backdrop { background: var(--backdrop); }
     <main id="main" class="main" tabindex="-1"></main>
   </div>
 </div>
+
+<section id="settings" class="settings" role="dialog" aria-labelledby="settings-title" hidden>
+  <p id="settings-title" class="eyebrow">Settings</p>
+  <div class="set-group">
+    <p id="set-theme-label" class="set-label">Appearance</p>
+    <div class="segmented" role="radiogroup" aria-labelledby="set-theme-label">
+      <label><input type="radio" id="set-theme-auto" name="set-theme" value="auto"><span>Auto</span></label>
+      <label><input type="radio" id="set-theme-light" name="set-theme" value="light"><span>Light</span></label>
+      <label><input type="radio" id="set-theme-dark" name="set-theme" value="dark"><span>Dark</span></label>
+    </div>
+  </div>
+  <div class="set-group">
+    <p id="set-size-label" class="set-label">Text size</p>
+    <div class="segmented" role="radiogroup" aria-labelledby="set-size-label">
+      <label><input type="radio" id="set-size-standard" name="set-size" value="standard"><span>Standard</span></label>
+      <label><input type="radio" id="set-size-large" name="set-size" value="large"><span>Large</span></label>
+    </div>
+    <p class="set-note">Large is easier to read on a TV or a projector.</p>
+  </div>
+  <div class="set-group">
+    <p class="set-label">Draft board</p>
+    <label class="check" for="set-hide-assigned"><input type="checkbox" id="set-hide-assigned"><span>Hide assigned players</span></label>
+  </div>
+</section>
 
 <dialog id="assign-dialog" aria-labelledby="assign-title">
   <div class="dlg" tabindex="-1" autofocus>
@@ -674,14 +851,11 @@ dialog::backdrop { background: var(--backdrop); }
   </div>
 </dialog>
 
-<dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-body">
+<dialog id="choice-dialog" aria-labelledby="choice-title" aria-describedby="choice-body">
   <div class="dlg" tabindex="-1" autofocus>
-    <h2 id="confirm-title" class="dlg-title"></h2>
-    <p id="confirm-body" class="muted"></p>
-    <div class="dlg-foot">
-      <button type="button" class="btn" data-close>Cancel</button>
-      <button type="button" id="confirm-ok" class="btn btn-primary"></button>
-    </div>
+    <h2 id="choice-title" class="dlg-title"></h2>
+    <p id="choice-body" class="muted"></p>
+    <div id="choice-buttons" class="dlg-foot"></div>
   </div>
 </dialog>
 
@@ -701,7 +875,12 @@ dialog::backdrop { background: var(--backdrop); }
 const TEAM_COUNT = 10;
 const NAME_MAX = 30;
 const STORAGE_KEY = 'soccer-draft.v1';
+const SETTINGS_KEY = 'soccer-draft.settings';
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+// The export keeps the whole draft in this hidden sheet, so that Continue can open it again.
+const DATA_SHEET = 'Draft data';
+const DATA_MARK = 'Soccer Draft';
+const DATA_FORMAT = 'format 1';
 
 const AREA_LABELS = { gk: 'Goalkeepers', def: 'Defenders', mid: 'Midfielders', fwd: 'Forwards', oth: 'Other roles' };
 const AREA_ORDER = ['gk', 'def', 'mid', 'fwd', 'oth'];
@@ -798,19 +977,18 @@ function buildModel(rows) {
 
 class ReadError extends Error {}
 
-async function readSpreadsheetFile(file) {
+// Every sheet of an .xlsx file, or the single table of a CSV file.
+async function readTables(file) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (!bytes.length) throw new ReadError('The file is empty.');
-  let tables;
-  if (bytes[0] === 0x50 && bytes[1] === 0x4b) {
-    tables = await readXlsx(bytes);
-  } else if (bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0) {
+  if (bytes[0] === 0x50 && bytes[1] === 0x4b) return readXlsx(bytes);
+  if (bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0) {
     throw new ReadError('This is an older Excel file (.xls). Open it in Excel, Numbers or LibreOffice, save it as .xlsx and load it again.');
-  } else {
-    tables = [{ name: file.name, rows: parseCsv(decodeText(bytes)) }];
   }
-  return extractPlayers(tables);
+  return [{ name: file.name, rows: parseCsv(decodeText(bytes)) }];
 }
+
+const loadRows = table => table.rows || table.load();
 
 function openZip(bytes) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -1038,7 +1216,7 @@ function parseCsv(text) {
   return rows;
 }
 
-const normHeader = v => String(v == null ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+const normHeader = v => String(v == null ? '' : v).normalize('NFD').replace(/\p{M}/gu, '')
   .toLowerCase().replace(/[^a-z0-9()]+/g, ' ').trim();
 const cleanText = v => (v == null || v === false ? '' : String(v).replace(/\s+/g, ' ').trim());
 
@@ -1067,7 +1245,7 @@ function findColumns(row) {
 async function extractPlayers(tables) {
   let emptySheet = null;
   for (const table of tables) {
-    const rows = table.rows || await table.load();
+    const rows = await loadRows(table);
     for (let r = 0; r < Math.min(rows.length, 30); r++) {
       const cols = findColumns(rows[r]);
       if (!cols) continue;
@@ -1095,6 +1273,105 @@ async function extractPlayers(tables) {
     throw new ReadError(`The sheet “${emptySheet}” has the columns Name, Role and Overall but no complete rows. If the values come from formulas, open the file in Excel or LibreOffice, save it and load it again.`);
   }
   throw new ReadError('No players found. The spreadsheet needs a sheet with the columns Name, Role and Overall (or Score), one player per row.');
+}
+
+async function readSpreadsheetFile(file) {
+  return extractPlayers(await readTables(file));
+}
+
+/* -------------------------------------------- reading a saved draft */
+
+async function readDraftFile(file) {
+  const tables = await readTables(file);
+  const named = name => tables.find(t => t.name.trim().toLowerCase() === name.toLowerCase());
+  const data = named(DATA_SHEET);
+  const fromData = data ? parseDraftData(await loadRows(data), file.name) : null;
+  if (fromData) return fromData;
+  // Files made by the first version of the program have no data sheet: rebuild the draft from the team sheets.
+  const fromTeams = await parseTeamSheets(tables, file.name);
+  if (fromTeams) return fromTeams;
+  throw new ReadError(`“${file.name}” is not a draft saved with Export teams (.xlsx). To start from a list of players, go back and choose New draft.`);
+}
+
+function parseDraftData(rows, fileName) {
+  const text = (row, i) => cleanText(row && row[i]);
+  const find = (from, test) => {
+    for (let i = from; i < rows.length; i++) if (rows[i] && test(rows[i])) return i;
+    return -1;
+  };
+  const top = find(0, r => text(r, 0) === DATA_MARK);
+  if (top < 0) return null;
+  const meta = {};
+  for (let i = top + 1; i < rows.length && text(rows[i], 0); i++) meta[text(rows[i], 0).toLowerCase()] = text(rows[i], 1);
+  const teamHead = find(top, r => text(r, 0) === 'Team' && text(r, 1) === 'Name');
+  const playerHead = find(top, r => text(r, 0) === '#' && text(r, 1) === 'Player');
+  if (teamHead < 0 || playerHead < 0) return null;
+  const teams = [];
+  for (let i = teamHead + 1; i < rows.length && text(rows[i], 1); i++) teams.push(text(rows[i], 1));
+  const entries = [];
+  for (let i = playerHead + 1; i < rows.length; i++) {
+    const r = rows[i];
+    const name = text(r, 1);
+    const role = text(r, 2);
+    const overall = toNumber(r && r[3]);
+    if (!name || !role || overall === null) continue;
+    entries.push({ order: toNumber(r[0]), name, role, overall, team: toNumber(r[4]), seq: toNumber(r[5]) });
+  }
+  if (!entries.length) return null;
+  if (entries.every(e => e.order !== null)) entries.sort((a, b) => a.order - b.order);
+  return makeDraft({ file: meta['source file'] || fileName, sheet: meta['source sheet'] || '', createdAt: meta.created, teams, entries });
+}
+
+async function parseTeamSheets(tables, fileName) {
+  const key = t => t.name.trim().toLowerCase();
+  const allAt = tables.findIndex(t => key(t) === 'all teams');
+  const freeAt = tables.findIndex(t => key(t) === 'unassigned');
+  if (allAt < 0 || freeAt - allAt - 1 !== TEAM_COUNT) return null;
+  const allRows = await loadRows(tables[allAt]);
+  if (cleanText(allRows[0] && allRows[0][0]) !== 'Team') return null;
+  // Sheet names may be shortened; the exact team names are in the "All teams" sheet.
+  const exact = [];
+  for (const r of allRows.slice(1)) {
+    const n = cleanText(r && r[0]);
+    if (n && !exact.includes(n)) exact.push(n);
+  }
+  const teamTables = tables.slice(allAt + 1, freeAt);
+  const teams = teamTables.map(t => exact.find(n => sheetNames([n])[0] === t.name) || t.name);
+  const entries = [];
+  const collect = (rows, team) => {
+    for (const r of rows.slice(1)) {
+      const role = cleanText(r && r[0]);
+      const name = cleanText(r && r[1]);
+      const overall = toNumber(r && r[2]);
+      if (name && role && overall !== null) entries.push({ name, role, overall, team, seq: null });
+    }
+  };
+  for (let t = 0; t < TEAM_COUNT; t++) collect(await loadRows(teamTables[t]), t + 1);
+  collect(await loadRows(tables[freeAt]), null);
+  if (!entries.length) return null;
+  return makeDraft({ file: fileName, sheet: '', teams, entries });
+}
+
+function makeDraft({ file, sheet, createdAt, teams, entries }) {
+  const names = Array.from({ length: TEAM_COUNT }, (_, i) => cleanText(teams[i]).slice(0, NAME_MAX) || `Team ${i + 1}`);
+  const players = entries.map(e => [e.name, e.role, Math.round(e.overall * 100) / 100]);
+  const picks = [];
+  entries.forEach((e, id) => {
+    if (Number.isInteger(e.team) && e.team >= 1 && e.team <= TEAM_COUNT) {
+      picks.push([id, e.team - 1, Number.isInteger(e.seq) && e.seq > 0 ? e.seq : 0]);
+    }
+  });
+  let seq = picks.reduce((n, p) => Math.max(n, p[2]), 0);
+  for (const p of picks) if (!p[2]) p[2] = ++seq; // picks without a recorded order go last
+  const now = new Date().toISOString();
+  const created = Date.parse(createdAt);
+  const sameAsBuiltIn = players.length === BUILTIN.players.length
+    && players.every((p, i) => p[0] === BUILTIN.players[i][0] && p[1] === BUILTIN.players[i][1] && p[2] === BUILTIN.players[i][2]);
+  return {
+    v: 1, id: newId(), createdAt: Number.isNaN(created) ? now : new Date(created).toISOString(), savedAt: now,
+    source: { file: cleanText(file) || 'Saved draft', sheet: cleanText(sheet), builtIn: sameAsBuiltIn, players },
+    teams: names, picks, seq,
+  };
 }
 
 /* ------------------------------------------------- writing the export */
@@ -1175,9 +1452,16 @@ function zipStore(files) {
   return out;
 }
 
-const xmlEscape = s => String(s)
-  .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+// Text for an XML 1.0 document: drops the characters XML cannot carry, then escapes markup.
+function xmlEscape(value) {
+  let s = '';
+  for (const ch of String(value)) {
+    const c = ch.codePointAt(0);
+    const allowed = c === 9 || c === 10 || c === 13 || (c >= 32 && c < 0xd800) || (c > 0xdfff && c !== 0xfffe && c !== 0xffff);
+    if (allowed) s += ch;
+  }
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 function colName(i) {
   let s = '';
@@ -1185,7 +1469,7 @@ function colName(i) {
   return s;
 }
 
-// sheets: [{ name, header: [...], widths: [...], rows: [[...]] }]
+// sheets: [{ name, rows: [[...]], widths: [...], header: bool (bold, frozen first row), hidden: bool }]
 function buildWorkbook(sheets) {
   const XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
   const MAIN = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
@@ -1207,7 +1491,7 @@ function buildWorkbook(sheets) {
     `<Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
   add('xl/workbook.xml',
     `<workbook xmlns="${MAIN}" xmlns:r="${REL}"><bookViews><workbookView activeTab="0"/></bookViews><sheets>`
-    + sheets.map((s, i) => `<sheet name="${xmlEscape(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')
+    + sheets.map((s, i) => `<sheet name="${xmlEscape(s.name)}" sheetId="${i + 1}"${s.hidden ? ' state="hidden"' : ''} r:id="rId${i + 1}"/>`).join('')
     + '</sheets></workbook>');
   add('xl/_rels/workbook.xml.rels',
     `<Relationships xmlns="${PKG}">`
@@ -1224,19 +1508,20 @@ function buildWorkbook(sheets) {
     + '</styleSheet>');
 
   sheets.forEach((sheet, i) => {
-    const rows = [sheet.header, ...sheet.rows].map((row, r) => {
+    const rows = sheet.rows.map((row, r) => {
       const cells = row.map((value, c) => {
         const ref = colName(c) + (r + 1);
-        const style = r === 0 ? ' s="1"' : '';
+        const style = sheet.header && r === 0 ? ' s="1"' : '';
         if (value == null || value === '') return '';
         if (typeof value === 'number') return `<c r="${ref}"${style}><v>${value}</v></c>`;
         return `<c r="${ref}"${style} t="inlineStr"><is><t xml:space="preserve">${xmlEscape(value)}</t></is></c>`;
       });
       return `<row r="${r + 1}">${cells.join('')}</row>`;
     });
+    const pane = sheet.header ? '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>' : '';
     add(`xl/worksheets/sheet${i + 1}.xml`,
       `<worksheet xmlns="${MAIN}">`
-      + `<sheetViews><sheetView workbookViewId="0"${i === 0 ? ' tabSelected="1"' : ''}><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`
+      + `<sheetViews><sheetView workbookViewId="0"${i === 0 ? ' tabSelected="1"' : ''}>${pane}</sheetView></sheetViews>`
       + '<sheetFormatPr defaultRowHeight="15"/>'
       + '<cols>' + sheet.widths.map((w, c) => `<col min="${c + 1}" max="${c + 1}" width="${w}" customWidth="1"/>`).join('') + '</cols>'
       + `<sheetData>${rows.join('')}</sheetData></worksheet>`);
@@ -1330,6 +1615,67 @@ async function flushRemote() {
   }
 }
 
+/* ------------------------------------------------------------ settings */
+
+const settings = { theme: 'auto', size: 'standard', hideAssigned: false };
+
+function loadSettings() {
+  try {
+    const s = JSON.parse(window.localStorage.getItem(SETTINGS_KEY) || '{}');
+    if (['auto', 'light', 'dark'].includes(s.theme)) settings.theme = s.theme;
+    if (['standard', 'large'].includes(s.size)) settings.size = s.size;
+    settings.hideAssigned = s.hideAssigned === true;
+  } catch {
+    // settings are a convenience: the defaults apply
+  }
+}
+
+function saveSettings() {
+  try {
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch {
+    // not kept in this browser; the choice still applies until the page closes
+  }
+}
+
+function applySettings() {
+  const root = document.documentElement;
+  if (settings.theme === 'auto') root.removeAttribute('data-app-theme');
+  else root.setAttribute('data-app-theme', settings.theme);
+  if (settings.size === 'large') root.setAttribute('data-size', 'large');
+  else root.removeAttribute('data-size');
+  for (const input of document.querySelectorAll('#settings input[name="set-theme"]')) input.checked = input.value === settings.theme;
+  for (const input of document.querySelectorAll('#settings input[name="set-size"]')) input.checked = input.value === settings.size;
+  $('#set-hide-assigned').checked = settings.hideAssigned;
+}
+
+let settingsOpener = null;
+
+function toggleSettings(button) {
+  const panel = $('#settings');
+  if (!panel.hidden) {
+    closeSettings(false);
+    return;
+  }
+  const r = button.getBoundingClientRect();
+  panel.style.top = `${Math.round(r.bottom + 8)}px`;
+  panel.style.right = `${Math.max(16, Math.round(document.documentElement.clientWidth - r.right))}px`;
+  panel.hidden = false;
+  settingsOpener = button;
+  button.setAttribute('aria-expanded', 'true');
+  const current = panel.querySelector('input:checked') || panel.querySelector('input');
+  if (current) current.focus({ preventScroll: true });
+}
+
+function closeSettings(returnFocus) {
+  const panel = $('#settings');
+  if (panel.hidden) return;
+  panel.hidden = true;
+  for (const b of document.querySelectorAll('[data-settings]')) b.setAttribute('aria-expanded', 'false');
+  if (returnFocus && settingsOpener) settingsOpener.focus({ preventScroll: true });
+  settingsOpener = null;
+}
+
 /* ------------------------------------------------------------- state */
 
 const BUILTIN = (() => {
@@ -1345,7 +1691,7 @@ let exportMode = window.claude && typeof window.claude.use === 'function' ? null
 let downloads = null;
 let localWarned = false;
 let namesTouched = false;
-const ui = { screen: 'setup', tab: 'board', role: null, renaming: false };
+const ui = { screen: 'home', tab: 'board', role: null, renaming: false };
 
 function setDraft(d) {
   draft = d;
@@ -1367,7 +1713,7 @@ function persist() {
   queueRemote(draft);
   if (!ok && !store.ref && !localWarned && !window.claude) {
     localWarned = true;
-    toast('This browser is not keeping the draft. Export the teams before you close the page.');
+    toast('This browser is not keeping the draft. Use Export teams (.xlsx) to save it before you close the page.');
   }
 }
 
@@ -1402,7 +1748,44 @@ function unassign(id) {
   return prev;
 }
 
-/* -------------------------------------------------------- setup screen */
+const draftSummary = () => `${picks.size} of ${draft.source.players.length} players assigned`;
+
+// Asks before a draft in progress is replaced, and offers to save it as a file first.
+async function saveFirst(consequence) {
+  if (!draft || picks.size === 0) return true;
+  const choice = await choiceDialog({
+    title: 'Save the draft in progress?',
+    body: `The current draft has ${plural(picks.size, 'assigned player', 'assigned players')}. ${consequence} Save it as a file first if you want to continue it later.`,
+    buttons: [
+      { value: 'cancel', label: 'Cancel' },
+      { value: 'discard', label: 'Don’t save' },
+      { value: 'save', label: 'Save draft (.xlsx)', primary: true },
+    ],
+  });
+  if (choice === 'save') return exportTeams();
+  return choice === 'discard';
+}
+
+/* ---------------------------------------------------- the start pages */
+
+function renderHome() {
+  $('#home-continue-meta').textContent = draft
+    ? `Last draft: ${draftSummary()} · ${formatWhen(draft.savedAt)}`
+    : 'No saved draft yet';
+}
+
+function renderContinue() {
+  const box = $('#last-draft');
+  if (!draft) {
+    box.replaceChildren(h('p', { class: 'muted' }, 'No draft has been saved here yet. Open a saved draft file below, or go back and start a new draft.'));
+    return;
+  }
+  box.replaceChildren(
+    h('p', { class: 'last-file' }, draft.source.file),
+    h('p', { class: 'muted' }, `${draftSummary()} · last change ${formatWhen(draft.savedAt)}`),
+    h('p', { class: 'last-teams' }, draft.teams.join(' · ')),
+    h('div', { class: 'actions' }, h('button', { type: 'button', id: 'continue-last', class: 'btn btn-primary' }, 'Continue this draft')));
+}
 
 function buildTeamInputs(names) {
   const wrap = $('#team-inputs');
@@ -1423,21 +1806,19 @@ function readTeamInputs() {
 }
 
 function sameName(names) {
-  const seen = new Map();
+  const seen = new Set();
   for (const n of names) {
     const key = n.toLowerCase();
     if (seen.has(key)) return n;
-    seen.set(key, true);
+    seen.add(key);
   }
   return null;
 }
 
 function renderSetup() {
-  const card = $('#resume-card');
-  card.hidden = !draft;
-  if (draft) {
-    $('#resume-meta').textContent = `${picks.size} of ${draft.source.players.length} players assigned · ${draft.source.file} · last change ${formatWhen(draft.savedAt)}`;
-  }
+  const note = $('#replace-note');
+  note.hidden = !(draft && picks.size);
+  if (draft && picks.size) note.textContent = `Starting this draft replaces the draft in progress (${draftSummary()}).`;
   const src = setupSource;
   const roles = buildModel(src.players).roles;
   $('#source-name').textContent = src.file;
@@ -1482,28 +1863,69 @@ function startDraft() {
     return;
   }
   error.hidden = true;
-  const begin = () => {
-    const now = new Date().toISOString();
-    const src = setupSource;
-    setDraft({
-      v: 1, id: newId(), createdAt: now, savedAt: now,
-      source: { file: src.file, sheet: src.sheet || '', builtIn: !!src.builtIn, players: src.players },
-      teams: names, picks: [], seq: 0,
-    });
-    persist();
-    Object.assign(ui, { screen: 'draft', tab: 'board', role: firstRoleKey(), renaming: false });
-    render();
-    window.scrollTo(0, 0);
-  };
-  if (draft && picks.size > 0) {
-    confirmDialog({
-      title: 'Replace the draft in progress?',
-      body: `The current draft has ${plural(picks.size, 'assigned player', 'assigned players')}. Starting a new draft clears it.`,
-      confirm: 'Start new draft',
-    }).then(ok => { if (ok) begin(); });
-  } else {
-    begin();
+  const now = new Date().toISOString();
+  const src = setupSource;
+  setDraft({
+    v: 1, id: newId(), createdAt: now, savedAt: now,
+    source: { file: src.file, sheet: src.sheet || '', builtIn: !!src.builtIn, players: src.players },
+    teams: names, picks: [], seq: 0,
+  });
+  persist();
+  openDraft();
+}
+
+async function importDraft(file) {
+  const error = $('#import-error');
+  const status = $('#import-status');
+  error.hidden = true;
+  status.textContent = `Reading ${file.name}…`;
+  let imported;
+  try {
+    imported = await readDraftFile(file);
+  } catch (e) {
+    error.textContent = e instanceof ReadError ? e.message : 'The file could not be read. Choose a file made with Export teams (.xlsx).';
+    error.hidden = false;
+    if (!(e instanceof ReadError)) console.error(e);
+    return;
+  } finally {
+    status.textContent = '';
   }
+  if (!(await saveFirst(`Opening “${file.name}” replaces it.`))) return;
+  setDraft(imported);
+  persist();
+  openDraft();
+  toast(`Draft opened from ${file.name}: ${draftSummary()}.`);
+}
+
+/* ------------------------------------------------------------ navigation */
+
+function show(screen) {
+  ui.screen = screen;
+  ui.renaming = false;
+  closeSettings(false);
+  render();
+  window.scrollTo(0, 0);
+}
+
+function openDraft() {
+  ui.tab = 'board';
+  ui.role = firstRoleKey();
+  show('draft');
+}
+
+function continueLast() {
+  if (!draft) return;
+  if (!ui.role || !model.roleByKey.has(ui.role)) ui.role = firstRoleKey();
+  show('draft');
+}
+
+async function requestNewDraft() {
+  if (!(await saveFirst('A new draft replaces it.'))) return;
+  buildTeamInputs(draft ? draft.teams : []);
+  namesTouched = false;
+  $('#setup-error').hidden = true;
+  $('#source-error').hidden = true;
+  show('setup');
 }
 
 /* -------------------------------------------------------- draft screen */
@@ -1518,10 +1940,9 @@ function renderDraft() {
 }
 
 function renderTopbar() {
-  const total = model.players.length;
   $('#progress').replaceChildren(
     `${draft.source.file} · `,
-    h('strong', { class: 'num' }, picks.size), ` of ${total} players assigned`);
+    h('strong', { class: 'num' }, picks.size), ` of ${model.players.length} players assigned`);
   $('#export-btn').hidden = !exportMode;
 }
 
@@ -1561,14 +1982,16 @@ function renderBoard() {
   const parts = [h('div', { class: 'roles-wrap' }, picker)];
   if (role) {
     const free = available(role);
+    const hidden = settings.hideAssigned && free < role.ids.length;
     parts.push(h('div', { class: 'list-head', id: 'list-head' },
       h('h2', { class: `list-title a-${role.area}` },
         h('span', { class: 'code' }, role.code), role.name ? h('span', { class: 'full' }, role.name) : null),
-      h('p', { class: 'list-meta' }, `${free} of ${role.ids.length} available · highest overall first`)));
+      h('p', { class: 'list-meta' }, `${free} of ${role.ids.length} available · ${hidden ? 'assigned players hidden' : 'highest overall first'}`)));
     const list = h('ol', { class: 'players', 'aria-label': `${role.code} players` });
     for (const id of role.ids) {
       const p = model.players[id];
       const pick = picks.get(id);
+      if (pick && settings.hideAssigned) continue;
       const team = pick ? draft.teams[pick.team] : null;
       list.append(h('li', null, h('button', {
         type: 'button', class: 'p-row', dataset: { pid: String(id) }, disabled: !!pick,
@@ -1578,6 +2001,7 @@ function renderBoard() {
       h('span', { class: 'p-main' }, h('span', { class: 'p-name' }, p.name), pick ? h('span', { class: 'tag' }, team) : null),
       h('span', { class: 'p-ovr' }, fmtOvr(p.overall)))));
     }
+    if (!list.children.length) list.append(h('li', { class: 'empty-row' }, `Every ${role.code} player is assigned.`));
     parts.push(h('div', { class: 'table' },
       h('div', { class: 'cols eyebrow', 'aria-hidden': 'true' }, h('span', null, '#'), h('span', null, 'Player'), h('span', { class: 'r' }, 'Overall')),
       list));
@@ -1696,7 +2120,7 @@ function chooseTeam(team) {
   if (id == null || picks.has(id)) return;
   assign(id, team);
   renderDraft();
-  focusNextRow(id);
+  focusNextPlayer(id);
   const p = model.players[id];
   toast(`${p.name} assigned to ${draft.teams[team]}`, () => {
     const pick = picks.get(id);
@@ -1708,11 +2132,13 @@ function chooseTeam(team) {
   });
 }
 
-function focusNextRow(id) {
-  const rows = Array.from(document.querySelectorAll('#main .p-row'));
-  const at = rows.findIndex(r => r.dataset.pid === String(id));
-  const next = rows.slice(at + 1).concat(rows.slice(0, Math.max(at, 0))).find(r => !r.disabled);
-  if (next) next.focus({ preventScroll: true });
+// After an assignment, focus moves to the next available player of the same role.
+function focusNextPlayer(id) {
+  const ids = model.players[id].role.ids;
+  const at = ids.indexOf(id);
+  const next = ids.slice(at + 1).concat(ids.slice(0, at)).find(pid => !picks.has(pid));
+  const row = next == null ? null : $(`#main .p-row[data-pid="${next}"]`);
+  if (row) row.focus({ preventScroll: true });
   else $('#main').focus({ preventScroll: true });
 }
 
@@ -1763,36 +2189,63 @@ function saveRename() {
 /* --------------------------------------------------------------- export */
 
 function exportSheets() {
-  const names = sheetNames(['All teams', ...draft.teams, 'Unassigned']);
+  // The fixed sheets claim their names first, so a team called "Unassigned" cannot take one.
+  const [dataName, allName, freeName, ...teamNames] = sheetNames([DATA_SHEET, 'All teams', 'Unassigned', ...draft.teams]);
   const byTeam = draft.teams.map((_, t) => teamPlayers(t));
   const all = [];
   byTeam.forEach((players, t) => players.forEach(p => all.push([draft.teams[t], p.role.code, p.name, p.overall])));
-  const sheets = [{ name: names[0], header: ['Team', 'Role', 'Player', 'Overall'], widths: [24, 8, 28, 9], rows: all }];
+  const sheets = [{ name: allName, header: true, widths: [24, 8, 28, 9], rows: [['Team', 'Role', 'Player', 'Overall'], ...all] }];
   byTeam.forEach((players, t) => sheets.push({
-    name: names[t + 1], header: ['Role', 'Player', 'Overall'], widths: [8, 28, 9],
-    rows: players.map(p => [p.role.code, p.name, p.overall]),
+    name: teamNames[t], header: true, widths: [8, 28, 9],
+    rows: [['Role', 'Player', 'Overall'], ...players.map(p => [p.role.code, p.name, p.overall])],
   }));
   const free = model.roles.flatMap(r => r.ids.filter(id => !picks.has(id)).map(id => model.players[id]));
   sheets.push({
-    name: names[names.length - 1], header: ['Role', 'Player', 'Overall'], widths: [8, 28, 9],
-    rows: free.map(p => [p.role.code, p.name, p.overall]),
+    name: freeName, header: true, widths: [8, 28, 9],
+    rows: [['Role', 'Player', 'Overall'], ...free.map(p => [p.role.code, p.name, p.overall])],
+  });
+  sheets.push({
+    name: dataName, hidden: true, widths: [14, 28, 10, 9, 7, 7],
+    rows: [
+      [DATA_MARK, DATA_FORMAT],
+      ['Source file', draft.source.file],
+      ['Source sheet', draft.source.sheet || ''],
+      ['Created', draft.createdAt || ''],
+      ['Saved', new Date().toISOString()],
+      [],
+      ['Team', 'Name'],
+      ...draft.teams.map((name, i) => [i + 1, name]),
+      [],
+      ['#', 'Player', 'Role', 'Overall', 'Team', 'Pick'],
+      ...draft.source.players.map(([name, role, overall], id) => {
+        const pick = picks.get(id);
+        return [id + 1, name, role, overall, pick ? pick.team + 1 : '', pick ? pick.seq : ''];
+      }),
+    ],
   });
   return sheets;
 }
 
+// Saves the teams, and the whole draft, as an .xlsx file. Resolves true once the file is handed over.
 async function exportTeams() {
   const bytes = buildWorkbook(exportSheets());
-  const stamp = new Date().toISOString().slice(0, 10);
-  const filename = `soccer-draft-teams-${stamp}.xlsx`;
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const filename = `soccer-draft-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.xlsx`;
   if (exportMode === 'capability' && downloads) {
     try {
       const result = await downloads.save({ filename, data: new Blob([bytes], { type: XLSX_MIME }) });
-      if (result && result.status === 'saved') toast('Teams exported.');
+      if (result && result.status === 'saved') toast(`Saved as ${filename}.`);
+      return true;
     } catch (e) {
-      if (e && e.code === 'declined') return;
-      toast(e && e.code === 'rate_limited' ? 'Another save is already waiting for your answer.' : 'The export could not be saved. Try again.');
+      if (e && e.code === 'declined') return false;
+      toast(e && e.code === 'rate_limited' ? 'Another save is already waiting for your answer.' : 'The file could not be saved. Try again.');
+      return false;
     }
-    return;
+  }
+  if (!exportMode) {
+    toast('Saving files is not available here.');
+    return false;
   }
   const url = URL.createObjectURL(new Blob([bytes], { type: XLSX_MIME }));
   const a = h('a', { href: url, download: filename, hidden: true });
@@ -1800,18 +2253,22 @@ async function exportTeams() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 30000);
+  toast(`Saved as ${filename}.`);
+  return true;
 }
 
 /* ------------------------------------------------ dialogs and messages */
 
-function confirmDialog({ title, body, confirm }) {
-  const dlg = $('#confirm-dialog');
-  $('#confirm-title').textContent = title;
-  $('#confirm-body').textContent = body;
-  $('#confirm-ok').textContent = confirm;
+// buttons: [{ value, label, primary }]. Resolves with the chosen value, or 'cancel'.
+function choiceDialog({ title, body, buttons }) {
+  const dlg = $('#choice-dialog');
+  $('#choice-title').textContent = title;
+  $('#choice-body').textContent = body;
+  $('#choice-buttons').replaceChildren(...buttons.map(b =>
+    h('button', { type: 'button', class: 'btn' + (b.primary ? ' btn-primary' : ''), dataset: { value: b.value } }, b.label)));
   dlg.returnValue = '';
   return new Promise(resolve => {
-    dlg.addEventListener('close', () => resolve(dlg.returnValue === 'ok'), { once: true });
+    dlg.addEventListener('close', () => resolve(dlg.returnValue || 'cancel'), { once: true });
     dlg.showModal();
   });
 }
@@ -1830,7 +2287,7 @@ function toast(message, undo) {
   el.classList.add('in');
   announce(message);
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(hideToast, undo ? 7000 : 4000);
+  toastTimer = setTimeout(hideToast, undo ? 7000 : 4500);
 }
 
 function hideToast() {
@@ -1846,35 +2303,35 @@ function announce(message) {
 
 /* ------------------------------------------------------------- render */
 
+const SCREENS = ['home', 'continue', 'setup', 'draft'];
+
 function render() {
-  $('#setup-screen').hidden = ui.screen !== 'setup';
-  $('#draft-screen').hidden = ui.screen !== 'draft';
-  if (ui.screen === 'setup') renderSetup();
+  const s = ui.screen;
+  for (const name of SCREENS) $(`#${name}-screen`).hidden = s !== name;
+  $('#pagebar').hidden = s === 'draft';
+  $('#back-btn').hidden = s === 'home' || s === 'draft';
+  if (s === 'home') renderHome();
+  else if (s === 'continue') renderContinue();
+  else if (s === 'setup') renderSetup();
   else renderDraft();
-}
-
-function openSetup() {
-  ui.screen = 'setup';
-  ui.renaming = false;
-  buildTeamInputs(draft ? draft.teams : []);
-  namesTouched = false;
-  $('#setup-error').hidden = true;
-  render();
-  window.scrollTo(0, 0);
-}
-
-function resume() {
-  if (!draft) return;
-  ui.screen = 'draft';
-  if (!ui.role || !model.roleByKey.has(ui.role)) ui.role = firstRoleKey();
-  render();
-  window.scrollTo(0, 0);
 }
 
 /* ------------------------------------------------------------- events */
 
 function wireEvents() {
-  $('#resume-btn').addEventListener('click', resume);
+  $('#choose-continue').addEventListener('click', () => show('continue'));
+  $('#choose-new').addEventListener('click', requestNewDraft);
+  $('#back-btn').addEventListener('click', () => show('home'));
+  $('#continue-screen').addEventListener('click', e => {
+    if (e.target.closest('#continue-last')) continueLast();
+  });
+  $('#import-btn').addEventListener('click', () => $('#import-input').click());
+  $('#import-input').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (file) importDraft(file);
+  });
+
   $('#start-btn').addEventListener('click', startDraft);
   $('#load-btn').addEventListener('click', () => $('#file-input').click());
   $('#builtin-btn').addEventListener('click', () => {
@@ -1899,23 +2356,27 @@ function wireEvents() {
     startDraft();
   });
 
-  // Dropping a file anywhere on the setup screen loads it.
-  const box = $('#source-box');
+  // A file dropped on the New draft page is a list of players; on the Continue page it is a saved draft.
+  const dropTarget = () => (ui.screen === 'setup' ? $('#source-box') : ui.screen === 'continue' ? $('#import-box') : null);
   const hasFiles = e => !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+  const clearDrag = () => document.querySelectorAll('.dropzone.dragging').forEach(el => el.classList.remove('dragging'));
   window.addEventListener('dragover', e => {
     if (!hasFiles(e)) return;
     e.preventDefault();
-    if (ui.screen === 'setup') box.classList.add('dragging');
+    const target = dropTarget();
+    if (target) target.classList.add('dragging');
   });
   window.addEventListener('dragleave', e => {
-    if (!e.relatedTarget) box.classList.remove('dragging');
+    if (!e.relatedTarget) clearDrag();
   });
   window.addEventListener('drop', e => {
     if (!hasFiles(e)) return;
     e.preventDefault();
-    box.classList.remove('dragging');
+    clearDrag();
     const file = e.dataTransfer.files[0];
-    if (file && ui.screen === 'setup') loadFile(file);
+    if (!file) return;
+    if (ui.screen === 'setup') loadFile(file);
+    else if (ui.screen === 'continue') importDraft(file);
   });
 
   $('#draft-screen').addEventListener('click', e => {
@@ -1927,7 +2388,8 @@ function wireEvents() {
     else if (d.pid != null) openAssign(Number(d.pid));
     else if (d.remove != null) removePlayer(Number(d.remove));
     else if (d.action === 'export') exportTeams();
-    else if (d.action === 'new-draft') openSetup();
+    else if (d.action === 'new-draft') requestNewDraft();
+    else if (d.action === 'home') show('home');
     else if (d.action === 'rename') {
       ui.renaming = true;
       renderDraft();
@@ -1959,14 +2421,38 @@ function wireEvents() {
     if (b) chooseTeam(Number(b.dataset.team));
   });
   assignDlg.addEventListener('close', () => { pendingPick = null; });
-
-  const confirmDlg = $('#confirm-dialog');
-  $('#confirm-ok').addEventListener('click', () => confirmDlg.close('ok'));
-  for (const dlg of [assignDlg, confirmDlg]) {
+  const choiceDlg = $('#choice-dialog');
+  $('#choice-buttons').addEventListener('click', e => {
+    const b = e.target.closest('[data-value]');
+    if (b) choiceDlg.close(b.dataset.value);
+  });
+  for (const dlg of [assignDlg, choiceDlg]) {
     dlg.addEventListener('click', e => {
       if (e.target === dlg || e.target.closest('[data-close]')) dlg.close();
     });
   }
+
+  // Settings menu
+  document.addEventListener('click', e => {
+    const button = e.target.closest('[data-settings]');
+    if (button) toggleSettings(button);
+  });
+  document.addEventListener('pointerdown', e => {
+    if ($('#settings').hidden || e.target.closest('#settings, [data-settings]')) return;
+    closeSettings(false);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('#settings').hidden) closeSettings(true);
+  });
+  $('#settings').addEventListener('change', e => {
+    const input = e.target;
+    if (input.name === 'set-theme') settings.theme = input.value;
+    else if (input.name === 'set-size') settings.size = input.value;
+    else if (input.id === 'set-hide-assigned') settings.hideAssigned = input.checked;
+    saveSettings();
+    applySettings();
+    if (ui.screen === 'draft' && input.id === 'set-hide-assigned') renderDraft();
+  });
 
   $('#toast-undo').addEventListener('click', () => {
     const undo = toastUndo;
@@ -1977,7 +2463,10 @@ function wireEvents() {
   const topbar = $('#topbar');
   const setTopbar = () => document.documentElement.style.setProperty('--topbar-h', topbar.offsetHeight + 'px');
   if (window.ResizeObserver) new ResizeObserver(setTopbar).observe(topbar);
-  window.addEventListener('resize', setTopbar);
+  window.addEventListener('resize', () => {
+    setTopbar();
+    closeSettings(false);
+  });
 
   const flushNow = () => {
     clearTimeout(store.timer);
@@ -2023,7 +2512,7 @@ async function connectClaude() {
         } else {
           if (setupSource.builtIn && !saved.source.builtIn) setupSource = { ...saved.source, skipped: [] };
           if (!namesTouched) buildTeamInputs(saved.teams);
-          renderSetup();
+          render();
         }
         return;
       }
@@ -2037,6 +2526,8 @@ async function connectClaude() {
 /* -------------------------------------------------------------- start */
 
 function start(hotData) {
+  loadSettings();
+  applySettings();
   const saved = readLocal();
   if (saved) setDraft(saved);
   if (draft && !draft.source.builtIn) setupSource = { ...draft.source, skipped: [] };
@@ -2050,10 +2541,12 @@ function start(hotData) {
     }
     if (data.setup.source && Array.isArray(data.setup.source.players)) setupSource = data.setup.source;
   }
-  if (data.ui && draft && data.ui.screen === 'draft') {
-    ui.screen = 'draft';
-    ui.tab = data.ui.tab === 'board' || (Number.isInteger(data.ui.tab) && data.ui.tab >= 0 && data.ui.tab < TEAM_COUNT) ? data.ui.tab : 'board';
-    ui.role = model.roleByKey.has(data.ui.role) ? data.ui.role : null;
+  if (data.ui && SCREENS.includes(data.ui.screen) && (data.ui.screen !== 'draft' || draft)) {
+    ui.screen = data.ui.screen;
+    if (draft) {
+      ui.tab = data.ui.tab === 'board' || (Number.isInteger(data.ui.tab) && data.ui.tab >= 0 && data.ui.tab < TEAM_COUNT) ? data.ui.tab : 'board';
+      ui.role = model.roleByKey.has(data.ui.role) ? data.ui.role : null;
+    }
   }
 
   wireEvents();
